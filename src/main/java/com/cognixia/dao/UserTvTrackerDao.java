@@ -1,6 +1,6 @@
 package com.cognixia.dao;
 
-public interface UserTrackerDao {
+public interface UserTvTrackerDao {
 
 
 }
