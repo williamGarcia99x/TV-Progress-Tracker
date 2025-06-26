@@ -23,6 +23,8 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
+    <!--Dependency for lombok. It reduces the amount of boilerplate code -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
@@ -36,6 +38,8 @@
       <version>9.3.0</version>
     </dependency>
 
+
+    <!--Dependency to use bycrpt in our application-->
     <dependency>
       <groupId>org.mindrot</groupId>
       <artifactId>jbcrypt</artifactId>

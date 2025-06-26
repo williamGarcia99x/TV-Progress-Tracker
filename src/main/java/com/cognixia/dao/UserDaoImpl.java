@@ -1,7 +1,10 @@
 package com.cognixia.dao;
 
+import com.cognixia.exception.UserAuthenticationException;
+import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.ConnectionFactory;
+import com.cognixia.util.PasswordUtil;
 
 
 import java.sql.*;
@@ -9,16 +12,31 @@ import java.util.Optional;
 
 public class UserDaoImpl implements UserDao{
 
+    // This method's logic has been transferred to UserService since it does not include any code directly
+    //interacting with the database.
     @Override
-    public Optional<User> authenticateUser(User user) {
+    public Optional<User> authenticateUser(String username, String password) {
+//        // Authenticate user. Compare the stored hashed password for the user with the given username against the provided
+//        //password
+//        Optional<User> userOptional = getUserByUsername(username);
+//
+//        //Username not found
+//        if(userOptional.isEmpty()){
+//            throw new UserAuthenticationException("Username not found: " + username);
+//        }
+//
+//        //Password is incorrect, return user object
+//        if(!PasswordUtil.checkPassword(password,userOptional.get().getPassword_hash())){
+//            throw new UserAuthenticationException("Password is incorrect for username: " + username);
+//        }
+//
+//        //Password is incorrect.
+//        return userOptional;
         return Optional.empty();
     }
 
     @Override
-    public Optional<User> createUser(User user) {
-
-        // In a real implementation, you would save the newUser to the database and return it.
-        // For now, we will just return an empty Optional.
+    public Optional<User> createUser(User user) throws UserRegistrationException{
 
         Connection connection = ConnectionFactory.getConnection();
         try {
@@ -37,26 +55,21 @@ public class UserDaoImpl implements UserDao{
         } catch (SQLIntegrityConstraintViolationException e){
             // This exception is thrown when there is a unique constraint violation, such as duplicate username
             // Log the exception or handle it as needed
-            System.err.println("Username already exists: " + user.getUsername());
-            // Consider throwing a custom exception here
-            return Optional.empty();
+            throw new UserRegistrationException("Username already exists: " + user.getUsername());
+
         } catch (SQLException e) {
-            // Log the exception or handle it as needed
+            //Log the exception or handle it as needed
             //Consider  custom exception throwing here
             throw new RuntimeException(e);
         }
 
 
-        // If the user creation fails or no user is created, return an empty Optional
-        // When would this execute?
-        // This would execute if the insert fails or no rows are affected
+        // This should not execute under any circumstances, but if it does, return an empty Optional
         return Optional.empty();
     }
 
     @Override
     public Optional<User> getUserById(int id) {
-
-
         return Optional.empty();
     }
 
