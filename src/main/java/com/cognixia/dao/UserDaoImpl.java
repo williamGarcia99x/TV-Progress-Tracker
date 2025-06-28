@@ -39,7 +39,12 @@ public class UserDaoImpl implements UserDao{
     @Override
     public Optional<User> createUser(User user) throws UserRegistrationException{
 
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = null;
+        try {
+            connection = ConnectionFactory.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         try {
             PreparedStatement pstmt = connection.prepareStatement("INSERT INTO users (username, password_hash) VALUES (?,?);",
                     PreparedStatement.RETURN_GENERATED_KEYS);
@@ -77,7 +82,12 @@ public class UserDaoImpl implements UserDao{
     @Override
     public Optional<User> getUserByUsername(String username) {
 
-        Connection connection = ConnectionFactory.getConnection();
+        Connection connection = null;
+        try {
+            connection = ConnectionFactory.getConnection();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         try {
             PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM users WHERE username = ?;");
             pstmt.setString(1, username);
