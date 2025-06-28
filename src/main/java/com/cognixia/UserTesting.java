@@ -24,8 +24,8 @@ public class UserTesting
             ConnectionFactory.getConnection();
 
             //Test user
-            //Optional<User> user = userService.createUser("williamfx99", "password");
-//          System.out.println(user.get().toString());
+            Optional<User> user = userService.createUser("williamfx99", "password");
+          System.out.println(user.get().toString());
 
             //Test logging in
             try{

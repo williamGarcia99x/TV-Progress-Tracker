@@ -6,14 +6,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface TvShowDao {
-    Optional<TvShow> getTvShowById(int id);
-    List<TvShow> getTvShowsByTitle(String title);
-    List<TvShow> getTvShowsByGenre(String genre);
-    List<TvShow> getTvShowsByStatus(String status);
-    List<TvShow> getTvShowsByReleaseYearRange(int startYear, int endYear);
-    List<TvShow> getAllTvShows();
-    boolean insertTvShow(TvShow tvShow);
 
+
+    public Optional<TvShow> getTvShowById(int showId);
 
     /**
      * Filters TV shows based on the provided criteria.

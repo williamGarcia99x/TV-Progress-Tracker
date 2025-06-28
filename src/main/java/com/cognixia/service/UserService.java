@@ -6,24 +6,22 @@ import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.PasswordUtil;
 import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 import java.util.Date;
 import java.util.Optional;
 
-@AllArgsConstructor
+@Service
 public class UserService {
 
     private UserDao userDao;
 
+    @Autowired
+    public UserService(UserDao userDao){
+        this.userDao = userDao;
+    }
 
-
-    // This class will contain methods to interact with UserDao
-    // and perform business logic related to users.
-
-    // Example method to authenticate a user
-    // public Optional<User> authenticateUser(String username, String password) {
-    //     // Logic to authenticate user using UserDao
-    // }
 
     public Optional<User> createUser(String username, String password) throws UserRegistrationException{
         // Logic to create a user using UserDao

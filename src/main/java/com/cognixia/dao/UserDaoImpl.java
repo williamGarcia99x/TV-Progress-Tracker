@@ -1,15 +1,16 @@
 package com.cognixia.dao;
 
-import com.cognixia.exception.UserAuthenticationException;
+
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.ConnectionFactory;
-import com.cognixia.util.PasswordUtil;
+import org.springframework.stereotype.Repository;
 
 
 import java.sql.*;
 import java.util.Optional;
 
+@Repository
 public class UserDaoImpl implements UserDao{
 
     // This method's logic has been transferred to UserService since it does not include any code directly

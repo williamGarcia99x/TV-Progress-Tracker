@@ -1,5 +1,3 @@
--- TV Show Progress Tracker Database Schema
--- Drop database if exists and create fresh
 DROP DATABASE IF EXISTS tv_progress_tracker;
 CREATE DATABASE tv_progress_tracker;
 USE tv_progress_tracker;
@@ -12,17 +10,45 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Genres table for normalized genre storage
+CREATE TABLE genres (
+    genre_id INT PRIMARY KEY,  -- Use TMDb genre IDs
+    name VARCHAR(100) NOT NULL UNIQUE
+);
+
 -- TV Shows table containing the master list of available shows
 CREATE TABLE tv_shows (
-    show_id INT PRIMARY KEY AUTO_INCREMENT,
+    show_id INT PRIMARY KEY,  -- Use TMDb show ID directly
     title VARCHAR(200) NOT NULL,
-    genre VARCHAR(100),
-    total_episodes INT NOT NULL DEFAULT 1,
-    total_seasons INT NOT NULL DEFAULT 1,
-    release_year YEAR,
-    description TEXT,
+    original_name VARCHAR(200),  -- Original title in original language
+    original_language CHAR(2),  -- ISO 639-1 language code
+    overview TEXT,  -- Description/plot summary
+    first_air_date DATE,  -- More precise than release_year
+    adult BOOLEAN DEFAULT FALSE,
+    backdrop_path VARCHAR(255),  -- TMDb backdrop image path
+    poster_path VARCHAR(255),    -- TMDb poster image path
+    vote_average DECIMAL(3,1) DEFAULT 0,  -- TMDb rating (0.0-10.0) User rating
+    vote_count INT DEFAULT 0, -- Number of votes received
+    total_episodes INT DEFAULT 1,
+    total_seasons INT DEFAULT 1,
     status ENUM('ongoing', 'completed', 'cancelled') DEFAULT 'ongoing',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    origin_country JSON,  -- Store array of country codes as JSON
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    -- Indexes for better query performance
+    INDEX idx_title (title),
+    INDEX idx_first_air_date (first_air_date),
+    INDEX idx_vote_average (vote_average)
+);
+
+-- Junction table for TV shows and their genres (many-to-many relationship)
+CREATE TABLE tv_show_genres (
+    show_id INT,
+    genre_id INT,
+    PRIMARY KEY (show_id, genre_id),
+    FOREIGN KEY (show_id) REFERENCES tv_shows(show_id) ON DELETE CASCADE,
+    FOREIGN KEY (genre_id) REFERENCES genres(genre_id) ON DELETE CASCADE
 );
 
 -- User TV Show Tracker - Junction table tracking user's progress on shows
@@ -30,90 +56,253 @@ CREATE TABLE user_tv_tracker (
     tracker_id INT PRIMARY KEY AUTO_INCREMENT,
     user_id INT NOT NULL,
     show_id INT NOT NULL,
-    watch_status ENUM('planning', 'in-progress', 'completed') NOT NULL DEFAULT 'planning',
+    watch_status ENUM('planning', 'watching', 'completed') NOT NULL DEFAULT 'planning',
     episodes_watched INT DEFAULT 0,
     current_season INT DEFAULT 1,
+    user_rating DECIMAL(2,1),  -- User's personal rating (1.0-10.0). Does not affect TV-show rating.
+    notes TEXT,  -- User's personal notes about the show
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    date_started TIMESTAMP NULL, -- timestamp when tuple obtains "in-progress" status
-    date_completed TIMESTAMP NULL, 
-    
+    date_started TIMESTAMP NULL,  -- When user started watching
+    date_completed TIMESTAMP NULL,  -- When user completed the show
+
     -- Foreign key constraints
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (show_id) REFERENCES tv_shows(show_id) ON DELETE CASCADE,
-    
+
     -- Ensure one entry per user/show
     UNIQUE KEY unique_user_show (user_id, show_id),
-    
-    -- Ensure episodes watched doesn't exceed total episodes. Validation 
-    -- is performed at the application level
+
+    -- Indexes for common queries
+    INDEX idx_user_status (user_id, watch_status),
+    INDEX idx_user_rating (user_id, user_rating)
 );
 
--- Populate TV Shows table with at least 10 shows (as required)
-INSERT INTO tv_shows (title, genre, total_episodes, total_seasons, release_year, description, status) VALUES
-('Breaking Bad', 'Drama/Crime', 62, 5, 2008, 'A high school chemistry teacher turned methamphetamine manufacturer', 'completed'),
-('The Office', 'Comedy', 188, 9, 2005, 'Mockumentary sitcom about office employees', 'completed'),
-('Stranger Things', 'Sci-Fi/Horror', 42, 4, 2016, 'Kids in a small town encounter supernatural forces', 'completed'),
-('Game of Thrones', 'Fantasy/Drama', 73, 8, 2011, 'Epic fantasy series based on George R.R. Martin novels', 'completed'),
-('The Crown', 'Historical Drama', 60, 6, 2016, 'The reign of Queen Elizabeth II', 'completed'),
-('Friends', 'Comedy', 236, 10, 1994, 'Six friends navigating life in New York City', 'completed'),
-('The Mandalorian', 'Sci-Fi/Adventure', 24, 3, 2019, 'A bounty hunter in the Star Wars universe', 'completed'),
-('Squid Game', 'Thriller/Drama', 9, 1, 2021, 'Desperate people compete in deadly childhood games', 'ongoing'),
-('Wednesday', 'Comedy/Horror', 8, 1, 2022, 'Wednesday Addams at Nevermore Academy', 'ongoing'),
-('House of the Dragon', 'Fantasy/Drama', 18, 2, 2022, 'Game of Thrones prequel about House Targaryen', 'ongoing'),
-('The Bear', 'Comedy/Drama', 28, 3, 2022, 'A chef returns to run his deceased brother\'s restaurant', 'ongoing'),
-('Avatar: The Last Airbender', 'Animation/Adventure', 61, 3, 2005, 'A young airbender must master the elements to save the world', 'completed'),
-('The Witcher', 'Fantasy/Adventure', 24, 3, 2019, 'A mutated monster hunter struggles to find his place in a world', 'ongoing'),
-('Ozark', 'Crime/Drama', 44, 4, 2017, 'A financial advisor launders money for a Mexican cartel', 'completed'),
-('Euphoria', 'Drama/Teen', 18, 2, 2019, 'A group of high school students navigate love, drugs, and trauma', 'ongoing');
+-- Insert common genres (TMDb genre IDs)
+INSERT INTO genres (genre_id, name) VALUES
+(10759, 'Action & Adventure'),
+(16, 'Animation'),
+(35, 'Comedy'),
+(80, 'Crime'),
+(99, 'Documentary'),
+(18, 'Drama'),
+(10751, 'Family'),
+(10762, 'Kids'),
+(9648, 'Mystery'),
+(10763, 'News'),
+(10764, 'Reality'),
+(10765, 'Sci-Fi & Fantasy'),
+(10766, 'Soap'),
+(10767, 'Talk'),
+(10768, 'War & Politics'),
+(37, 'Western');
 
--- Populate Users table with sample users
--- Note: In a real application, passwords should be properly hashed using bcrypt or similar
--- These are example hashes for demonstration (password123 hashed with bcrypt)
-INSERT INTO users (username, password_hash) VALUES
-('john_doe', '$2a$10$N9qo8uLOickgx2ZMRZoMye1K2SJPtQJ8H8G7L9Z3QQwQR5Z8N9qo8'),
-('jane_smith', '$2a$10$N9qo8uLOickgx2ZMRZoMye1K2SJPtQJ8H8G7L9Z3QQwQR5Z8N9qo8'),
-('mike_wilson', '$2a$10$N9qo8uLOickgx2ZMRZoMye1K2SJPtQJ8H8G7L9Z3QQwQR5Z8N9qo8'),
-('sarah_jones', '$2a$10$N9qo8uLOickgx2ZMRZoMye1K2SJPtQJ8H8G7L9Z3QQwQR5Z8N9qo8'),
-('david_brown', '$2a$10$N9qo8uLOickgx2ZMRZoMye1K2SJPtQJ8H8G7L9Z3QQwQR5Z8N9qo8');
 
--- Populate User TV Tracker table with sample tracking data
--- This demonstrates the three different watch statuses and realistic progress
-INSERT INTO user_tv_tracker (user_id, show_id, watch_status, episodes_watched, current_season, date_added, date_started, date_completed) VALUES
--- John's tracking data (user_id = 1)
-(1, 1, 'completed', 62, 5, '2023-01-15 10:00:00', '2023-01-15 10:00:00', '2023-02-28 20:30:00'), -- Breaking Bad
-(1, 2, 'in-progress', 45, 3, '2023-03-01 19:00:00', '2023-03-01 19:00:00', NULL), -- The Office
-(1, 3, 'planning', 0, 1, '2023-06-15 21:00:00', NULL, NULL), -- Stranger Things
-(1, 8, 'completed', 9, 1, '2023-06-01 21:00:00', '2023-06-01 21:00:00', '2023-06-05 23:15:00'), -- Squid Game
-(1, 12, 'planning', 0, 1, '2023-07-10 18:30:00', NULL, NULL), -- Avatar
+-- Insert Breaking Bad TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    1396,
+    'Breaking Bad',
+    'Breaking Bad',
+    'en',
+    'Walter White, a New Mexico chemistry teacher, is diagnosed with Stage III cancer and given a prognosis of only two years left to live. He becomes filled with a sense of fearlessness and an unrelenting desire to secure his family\'s financial future at any cost as he enters the dangerous world of drugs and crime.',
+    '2008-01-20',
+    FALSE,
+    '/gc8PfyTqzqltKPW3X0cIVUGmagz.jpg',
+    '/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg',
+    8.9,
+    15710,
+    JSON_ARRAY('US')
+);
 
--- Jane's tracking data (user_id = 2)
-(2, 1, 'in-progress', 25, 2, '2023-04-10 20:00:00', '2023-04-10 20:00:00', NULL), -- Breaking Bad
-(2, 6, 'completed', 236, 10, '2022-12-01 18:00:00', '2022-12-01 18:00:00', '2023-01-30 22:00:00'), -- Friends
-(2, 3, 'in-progress', 18, 2, '2023-05-15 21:30:00', '2023-05-15 21:30:00', NULL), -- Stranger Things
-(2, 9, 'planning', 0, 1, '2023-07-01 14:00:00', NULL, NULL), -- Wednesday
-(2, 13, 'in-progress', 8, 1, '2023-06-20 19:45:00', '2023-06-20 19:45:00', NULL), -- The Witcher
+-- Insert genre associations for Breaking Bad
+-- Genre ID 18 = Drama, Genre ID 80 = Crime
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(1396, 18),  -- Drama
+(1396, 80);  -- Crime
 
--- Mike's tracking data (user_id = 3)
-(3, 4, 'completed', 73, 8, '2023-02-01 19:30:00', '2023-02-01 19:30:00', '2023-04-15 23:45:00'), -- Game of Thrones
-(3, 7, 'in-progress', 16, 2, '2023-06-01 20:00:00', '2023-06-01 20:00:00', NULL), -- The Mandalorian
-(3, 12, 'planning', 0, 1, '2023-07-05 16:20:00', NULL, NULL), -- Avatar
-(3, 14, 'completed', 44, 4, '2023-03-10 21:15:00', '2023-03-10 21:15:00', '2023-05-20 22:30:00'), -- Ozark
+-- Insert The Office (US) TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    2316,
+    'The Office',
+    'The Office',
+    'en',
+    'The everyday lives of office employees in the Scranton, Pennsylvania branch of the fictional Dunder Mifflin Paper Company.',
+    '2005-03-24',
+    FALSE,
+    '/mLyW3UTgi2lsMdtueYODcfAB9Ku.jpg',
+    '/7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg',
+    8.6,
+    4552,
+    JSON_ARRAY('US')
+);
 
--- Sarah's tracking data (user_id = 4)
-(4, 5, 'in-progress', 25, 3, '2023-05-01 20:30:00', '2023-05-01 20:30:00', NULL), -- The Crown
-(4, 10, 'planning', 0, 1, '2023-07-12 17:00:00', NULL, NULL), -- House of the Dragon
-(4, 11, 'in-progress', 12, 2, '2023-06-10 19:00:00', '2023-06-10 19:00:00', NULL), -- The Bear
-(4, 15, 'planning', 0, 1, '2023-07-08 20:45:00', NULL, NULL), -- Euphoria
+-- Insert genre association for The Office (US)
+-- Genre ID 35 = Comedy
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(2316, 35);  -- Comedy
 
--- David's tracking data (user_id = 5)
-(5, 2, 'completed', 188, 9, '2023-01-05 18:00:00', '2023-01-05 18:00:00', '2023-04-20 21:45:00'), -- The Office
-(5, 8, 'planning', 0, 1, '2023-07-15 16:30:00', NULL, NULL), -- Squid Game
-(5, 9, 'completed', 8, 1, '2023-06-25 22:00:00', '2023-06-25 22:00:00', '2023-06-28 23:30:00'), -- Wednesday
-(5, 13, 'planning', 0, 1, '2023-07-20 19:15:00', NULL, NULL); -- The Witcher
+-- Insert Stranger Things TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    66732,
+    'Stranger Things',
+    'Stranger Things',
+    'en',
+    'When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces, and one strange little girl.',
+    '2016-07-15',
+    FALSE,
+    '/56v2KjBlU4XaOv9rVYEQypROD7P.jpg',
+    '/uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg',
+    8.6,
+    18437,
+    JSON_ARRAY('US')
+);
 
--- Create indexes for better query performance
-CREATE INDEX idx_user_tv_tracker_user_id ON user_tv_tracker(user_id);
-CREATE INDEX idx_user_tv_tracker_show_id ON user_tv_tracker(show_id);
-CREATE INDEX idx_user_tv_tracker_status ON user_tv_tracker(watch_status);
-CREATE INDEX idx_tv_shows_genre ON tv_shows(genre);
-CREATE INDEX idx_tv_shows_status ON tv_shows(status);
+-- Insert genre associations for Stranger Things
+-- Genre ID 18 = Drama, Genre ID 10765 = Sci-Fi & Fantasy, Genre ID 9648 = Mystery
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(66732, 18),    -- Drama
+(66732, 10765), -- Sci-Fi & Fantasy
+(66732, 9648);  -- Mystery
+
+-- Insert Game of Thrones TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    1399,
+    'Game of Thrones',
+    'Game of Thrones',
+    'en',
+    'Seven noble families fight for control of the mythical land of Westeros. Friction between the houses leads to full-scale war. All while a very ancient evil awakens in the farthest north. Amidst the war, a neglected military order of misfits, the Night\'s Watch, is all that stands between the realms of men and icy horrors beyond.',
+    '2011-04-17',
+    FALSE,
+    '/zZqpAXxVSBtxV9qPBcscfXBcL2w.jpg',
+    '/1XS1oqL89opfnbLl8WnZY1O1uJx.jpg',
+    8.5,
+    25170,
+    JSON_ARRAY('US')
+);
+
+-- Insert genre associations for Game of Thrones
+-- Genre ID 10765 = Sci-Fi & Fantasy, Genre ID 18 = Drama, Genre ID 10759 = Action & Adventure
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(1399, 10765), -- Sci-Fi & Fantasy
+(1399, 18),    -- Drama
+(1399, 10759); -- Action & Adventure
+
+-- Insert Friends TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    1668,
+    'Friends',
+    'Friends',
+    'en',
+    'Six young people from New York City, on their own and struggling to survive in the real world, find the companionship, comfort and support they get from each other to be the perfect antidote to the pressures of life.',
+    '1994-09-22',
+    FALSE,
+    '/l0qVZIpXtIo7km9u5Yqh0nKPOr5.jpg',
+    '/2koX1xLkpTQM4IZebYvKysFW1Nh.jpg',
+    8.4,
+    8421,
+    JSON_ARRAY('US')
+);
+
+-- Insert genre association for Friends
+-- Genre ID 35 = Comedy
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(1668, 35);  -- Comedy
+
+-- Insert Money Heist (La casa de papel) TV show
+INSERT INTO tv_shows (
+    show_id,
+    title,
+    original_name,
+    original_language,
+    overview,
+    first_air_date,
+    adult,
+    backdrop_path,
+    poster_path,
+    vote_average,
+    vote_count,
+    origin_country
+) VALUES (
+    71446,
+    'Money Heist',
+    'La casa de papel',
+    'es',
+    'To carry out the biggest heist in history, a mysterious man called The Professor recruits a band of eight robbers who have a single characteristic: none of them has anything to lose. Five months of seclusion - memorizing every step, every detail, every probability - culminate in eleven days locked up in the National Coinage and Stamp Factory of Spain, surrounded by police forces and with dozens of hostages in their power, to find out whether their suicide wager will lead to everything or nothing.',
+    '2017-05-02',
+    FALSE,
+    '/gFZriCkpJYsApPZEF3jhxL4yLzG.jpg',
+    '/reEMJA1uzscCbkpeRJeTT2bjqUp.jpg',
+    8.2,
+    18950,
+    JSON_ARRAY('ES')
+);
+
+-- Insert genre associations for Money Heist
+-- Genre ID 80 = Crime, Genre ID 18 = Drama
+INSERT INTO tv_show_genres (show_id, genre_id) VALUES
+(71446, 80),  -- Crime
+(71446, 18);  -- Drama
