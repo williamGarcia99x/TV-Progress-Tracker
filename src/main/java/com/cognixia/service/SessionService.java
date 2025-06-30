@@ -27,8 +27,8 @@ public class SessionService {
 
         // Using UUID for simplicity
         String token = UUID.randomUUID().toString();
-        // Set the expiration time (e.g., 1 hour from now)
-        LocalDateTime expirationTime = LocalDateTime.now().plusHours(1);
+        // Set the expiration time (e.g., 12 hours from now)
+        LocalDateTime expirationTime = LocalDateTime.now().plusHours(12);
 
         // Store the session (this is a placeholder, implement your own storage logic)
         // For example, you could store it in a database or an in-memory cache
@@ -36,4 +36,12 @@ public class SessionService {
 
         return token; // Return the generated token
     }
+
+
+    public void deleteSession(String token) {
+        // Delete the session based on the token
+        sessionDao.deleteSession(token);
+    }
+
+
 }
