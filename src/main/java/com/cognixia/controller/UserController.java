@@ -1,5 +1,6 @@
 package com.cognixia.controller;
 
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.service.SessionService;
@@ -79,11 +80,10 @@ public class UserController {
 
 
 
-    @ExceptionHandler(Exception.class)
+    @ExceptionHandler(ServerException.class)
     public ResponseEntity<String> handleException(Exception e) {
         // Log the exception (optional)
         e.printStackTrace();
-
         // Return a generic error response
         return ResponseEntity.status(500).body("An error occurred: " + e.getMessage());
     }

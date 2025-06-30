@@ -1,5 +1,6 @@
 package com.cognixia.dao.Session;
 
+import com.cognixia.exception.ServerException;
 import com.cognixia.model.Session;
 import com.cognixia.util.ConnectionFactory;
 
@@ -28,7 +29,7 @@ public class SessionDaoImpl {
 
             pstmt.executeUpdate();
         }catch (SQLException e){
-            throw new RuntimeException("Error creating session: " + e.getMessage());
+            throw new ServerException("Error creating session: " + e.getMessage());
         }
 
     }
@@ -42,7 +43,7 @@ public class SessionDaoImpl {
             pstmt.setString(1, token);
             pstmt.executeUpdate();
         }catch (SQLException e){
-            throw new RuntimeException("Error deleting session: " + e.getMessage());
+            throw new ServerException("Error deleting session: " + e.getMessage());
         }
     }
 
@@ -61,7 +62,7 @@ public class SessionDaoImpl {
                 return Optional.of(mapRowToSession(rs));
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving session: " + e.getMessage());
+            throw new ServerException("Error retrieving session: " + e.getMessage());
         }
 
         // If no session is found. Check for expiration is down at higher levels.

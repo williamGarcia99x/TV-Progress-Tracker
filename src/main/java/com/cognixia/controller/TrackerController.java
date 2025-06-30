@@ -2,6 +2,7 @@ package com.cognixia.controller;
 
 
 import com.cognixia.dto.TrackShowRequest;
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerInsertionException;
 import com.cognixia.service.UserTvTrackerService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -20,9 +21,6 @@ public class TrackerController {
     public TrackerController(UserTvTrackerService userTvTrackerService){
         this.userTvTrackerService = userTvTrackerService;
     }
-
-
-
 
     @PostMapping("/tracker")
     @ResponseStatus(HttpStatus.CREATED) //HTTP status code for successful creation
@@ -47,16 +45,12 @@ public class TrackerController {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
     }
 
-
-
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<String> handleException(Exception e) {
+    @ExceptionHandler(ServerException.class)
+    public ResponseEntity<String> handleException(ServerException e) {
         // Log the exception (optional)
         e.printStackTrace();
-
         // Return a generic error response
-        return ResponseEntity.status(500).body("An error occurred: " + e.getMessage());
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: " + e.getMessage());
     }
 
 }

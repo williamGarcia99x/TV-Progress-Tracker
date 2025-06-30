@@ -2,7 +2,9 @@ package com.cognixia.service;
 
 import com.cognixia.dao.UserTvTracker.UserTvTrackerDao;
 import com.cognixia.dto.TrackShowRequest;
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerInsertionException;
+import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,13 +24,9 @@ public class UserTvTrackerService {
         this.tvShowService = tvShowService;
     }
 
-    // Example method to get all tracked TV shows for a user
-    // public List<TvShow> getTrackedTvShows(int userId) {
-    //     // Logic to retrieve all tracked TV shows for a user using UserTvTrackerDao
-    // }
 
-    //TODO handle exception handling
-    public void trackShow(TrackShowRequest.UserTvTrackerDto tracker, TrackShowRequest.TvShowDto tvShow) throws UserTvTrackerInsertionException {
+
+    public void trackShow(TrackShowRequest.UserTvTrackerDto tracker, TrackShowRequest.TvShowDto tvShow) throws UserTvTrackerInsertionException, ServerException {
 
 
         //If the watch status is WATCHING, then episodes watched must be greater than 0 and
@@ -74,6 +72,12 @@ public class UserTvTrackerService {
         //done validation
         //Track the show using the UserTvTrackerDao
         userTvTrackerDao.trackShow(tracker, tvShow);
+
+    }
+
+
+    public void updateTracking(UserTvTracker tracker){
+
 
     }
 

@@ -2,11 +2,13 @@ package com.cognixia.service;
 
 
 import com.cognixia.dao.Session.SessionDaoImpl;
+import com.cognixia.exception.ServerException;
 import com.cognixia.model.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -23,7 +25,7 @@ public class SessionService {
 
     //create a session for a user
     //this will generate a token and set the expiration time. UserId is checked at higher levels
-    public String createSession(int userId) {
+    public String createSession(int userId) throws ServerException{
 
         // Using UUID for simplicity
         String token = UUID.randomUUID().toString();
@@ -38,10 +40,14 @@ public class SessionService {
     }
 
 
-    public void deleteSession(String token) {
+    public void deleteSession(String token) throws ServerException {
         // Delete the session based on the token
         sessionDao.deleteSession(token);
     }
 
 
+    public Optional<Session> getSessionByToken(String token) throws ServerException {
+        // Retrieve the session based on the token
+        return sessionDao.getSessionByToken(token);
+    }
 }

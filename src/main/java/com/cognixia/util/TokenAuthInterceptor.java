@@ -2,6 +2,7 @@ package com.cognixia.util;
 
 import com.cognixia.dao.Session.SessionDaoImpl;
 import com.cognixia.model.Session;
+import com.cognixia.service.SessionService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +15,11 @@ import java.util.Optional;
 @Component
 public class TokenAuthInterceptor implements HandlerInterceptor {
 
-    private SessionDaoImpl sessionDao;
+    private SessionService sessionService;
 
     @Autowired
-    public TokenAuthInterceptor(SessionDaoImpl sessionDao){
-        this.sessionDao = sessionDao;
+    public TokenAuthInterceptor(SessionService sessionService){
+        this.sessionService = sessionService;
     }
 
 
@@ -43,7 +44,7 @@ public class TokenAuthInterceptor implements HandlerInterceptor {
          String token = authHeader.substring(7); //Obtain the token after the "Bearer
 
          //Look up the session based on the token
-         Optional<Session> sessionOptional = sessionDao.getSessionByToken(token);
+         Optional<Session> sessionOptional = sessionService.getSessionByToken(token);
 
          //Token is invalid.
          if(sessionOptional.isEmpty()){

@@ -1,6 +1,7 @@
 package com.cognixia.dao.User;
 
 
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.ConnectionFactory;
@@ -44,7 +45,7 @@ public class UserDaoImpl implements UserDao{
             throw new UserRegistrationException("Username already exists: " + user.getUsername());
         } catch (SQLException e) {
             // Handle other SQL exceptions
-            throw new RuntimeException("Error while creating user: " + e.getMessage());
+            throw new ServerException("Error while creating user: " + e.getMessage());
         }
 
         // Return an empty Optional if no user was created

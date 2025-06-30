@@ -1,6 +1,7 @@
 package com.cognixia.dao.UserTvTracker;
 
 import com.cognixia.dto.TrackShowRequest;
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerInsertionException;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
@@ -25,7 +26,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
      */
     // Implement the methods from UserTvTrackerDao interface
     @Override
-    public void trackShow(TrackShowRequest.UserTvTrackerDto trackerDto, TrackShowRequest.TvShowDto showDto) throws UserTvTrackerInsertionException {
+    public void trackShow(TrackShowRequest.UserTvTrackerDto trackerDto, TrackShowRequest.TvShowDto showDto) throws UserTvTrackerInsertionException, ServerException {
 
         final String INSERT_SHOW   = "INSERT IGNORE INTO tv_shows (show_id, original_name) VALUES (?, ?)";
         final String INSERT_GENRE  = "INSERT IGNORE INTO tv_show_genres (show_id, genre_id) VALUES (?, ?)";
@@ -89,7 +90,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
                 else psTrack.setDate(9, trackerDto.getDateCompleted());
 
                 if (psTrack.executeUpdate() == 0)
-                    throw new SQLException("Failed to track show: no rows inserted.");
+                    throw new ServerException("Failed to track show: no rows inserted.");
             }
 
             conn.commit();                  // ✅ all good
@@ -110,7 +111,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
             } catch (SQLException ignored) { }
 
             //Generic exception for any other SQL errors
-           throw new UserTvTrackerInsertionException(ex.getMessage());
+           throw new ServerException(ex.getMessage());
         }
 
 

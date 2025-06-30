@@ -1,6 +1,7 @@
 package com.cognixia.service;
 
 import com.cognixia.dao.User.UserDao;
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserAuthenticationException;
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
@@ -22,7 +23,7 @@ public class UserService {
     }
 
 
-    public User createUser(String username, String password) throws UserRegistrationException{
+    public User createUser(String username, String password) throws UserRegistrationException, ServerException{
         // Logic to create a user using UserDao
         // This would typically involve hashing the password and saving the user to the database.
 
@@ -38,7 +39,7 @@ public class UserService {
 
         if(createdUser.isEmpty()){
             // If the user creation fails, throw an exception
-            throw new UserRegistrationException("Failed to create user with username: " + username);
+            throw new ServerException("Failed to create user with username: " + username);
         }
 
         return createdUser.get();
