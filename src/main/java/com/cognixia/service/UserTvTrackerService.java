@@ -3,11 +3,14 @@ package com.cognixia.service;
 import com.cognixia.dao.UserTvTracker.UserTvTrackerDao;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
-import com.cognixia.exception.UserTvTrackerInsertionException;
+import com.cognixia.exception.UserTvTrackerException;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.Optional;
 
 //The methods contain herein are protected, meaning that they will be invoked only after the
 //user has been authenticated and authorized to perform the action.
@@ -26,17 +29,55 @@ public class UserTvTrackerService {
 
 
 
-    public void trackShow(TrackShowRequest.UserTvTrackerDto tracker, TrackShowRequest.TvShowDto tvShow) throws UserTvTrackerInsertionException, ServerException {
+    public void trackShow(TrackShowRequest.UserTvTrackerDto tracker, TrackShowRequest.TvShowDto tvShow) throws UserTvTrackerException, ServerException {
 
 
+        UserTvTracker userTvTracker = TrackShowRequest.toUserTvTracker(tracker);
+        validateTracker(userTvTracker);
+
+        //done validation
+        //Track the show using the UserTvTrackerDao
+        userTvTrackerDao.trackShow(tvShow, userTvTracker);
+
+    }
+
+
+    public void updateTracking(UserTvTracker tracker) throws UserTvTrackerException, ServerException{
+
+        validateTracker(tracker);
+        //done validation
+        userTvTrackerDao.updateTracking(tracker);
+
+    }
+
+
+    public UserTvTracker getTrackingById(int trackerId) throws UserTvTrackerException, ServerException {
+        //Check if the tracker exists
+        Optional<UserTvTracker> tracker = userTvTrackerDao.getTrackerById(trackerId);
+
+        if(tracker.isEmpty()){
+            throw new UserTvTrackerException("Tracker with ID " + trackerId + " does not exist.");
+        }
+
+        //If it exists, return the tracker
+        return tracker.get();
+    }
+
+
+    public void deleteTracking(int trackerId, int userId) throws UserTvTrackerException, ServerException {
+        userTvTrackerDao.deleteTracking(trackerId);
+    }
+
+    //Validate tracker before tracking or updating
+    public void validateTracker(UserTvTracker tracker) throws UserTvTrackerException {
         //If the watch status is WATCHING, then episodes watched must be greater than 0 and
         //current season must be greater than 0
         if (tracker.getStatus() == WatchStatus.WATCHING) {
             if (tracker.getEpisodesWatched() < 0) {
-                throw new UserTvTrackerInsertionException("Episodes watched must be greater than 0 when status is WATCHING.");
+                throw new UserTvTrackerException("Episodes watched must be greater than 0 when status is WATCHING.");
             }
             if (tracker.getCurrentSeason() <= 0) {
-                throw new UserTvTrackerInsertionException("Current season must be greater than 0 when status is WATCHING.");
+                throw new UserTvTrackerException("Current season must be greater than 0 when status is WATCHING.");
             }
 
         } else {
@@ -44,42 +85,41 @@ public class UserTvTrackerService {
             tracker.setEpisodesWatched(null);
             tracker.setCurrentSeason(null);
         }
+
         //User rating must be between 1 and 10, inclusive
         if (tracker.getUserRating() != null && (tracker.getUserRating() < 1 || tracker.getUserRating() > 10)) {
-            throw new UserTvTrackerInsertionException("User rating must be between 1 and 10: " + tracker.getUserRating());
+            throw new UserTvTrackerException("User rating must be between 1 and 10: " + tracker.getUserRating());
         }
 
         // If the watch status is WATCHING or COMPLETED, then start date must be set
         if ((tracker.getStatus() == WatchStatus.WATCHING || tracker.getStatus() == WatchStatus.COMPLETED) && tracker.getDateStarted() == null) {
-            throw new UserTvTrackerInsertionException("Date started must be set when status is WATCHING or COMPLETED.");
+            throw new UserTvTrackerException("Date started must be set when status is WATCHING or COMPLETED.");
+        }
+
+        //if the watch status is COMPLETED, then date completed must be set
+        if (tracker.getStatus() == WatchStatus.COMPLETED && tracker.getDateCompleted() == null) {
+            throw new UserTvTrackerException("Date completed must be set when status is COMPLETED.");
         }
 
         //if both dateStarted and dateCompleted are not null, dateStarted must be before dateCompleted
         if (tracker.getDateStarted() != null && tracker.getDateCompleted() != null &&
                 tracker.getDateStarted().after(tracker.getDateCompleted())) {
-            throw new UserTvTrackerInsertionException("Date started cannot be after date completed.");
+            throw new UserTvTrackerException("Date started cannot be after date completed.");
         }
 
         //If dateStarted is not null, then status must be WATCHING or COMPLETED
         if (tracker.getDateStarted() != null && tracker.getStatus() == WatchStatus.PLANNING) {
-            throw new UserTvTrackerInsertionException("Date started cannot be set unless status is WATCHING or COMPLETED.");
+            throw new UserTvTrackerException("Date started cannot be set unless status is WATCHING or COMPLETED.");
         }
 
         //If dateCompleted is not null, then status must be COMPLETED
         if (tracker.getDateCompleted() != null && tracker.getStatus() != WatchStatus.COMPLETED) {
-            throw new UserTvTrackerInsertionException("Date completed cannot be set unless status is COMPLETED.");
+            throw new UserTvTrackerException("Date completed cannot be set unless status is COMPLETED.");
         }
-        //done validation
-        //Track the show using the UserTvTrackerDao
-        userTvTrackerDao.trackShow(tracker, tvShow);
 
     }
 
-
-    public void updateTracking(UserTvTracker tracker){
-
-
+    public List<UserTvTracker> getTrackersByUserId(Integer userIdOnRequest) throws ServerException {
+        return userTvTrackerDao.getTrackersByUserId(userIdOnRequest);
     }
-
-
 }

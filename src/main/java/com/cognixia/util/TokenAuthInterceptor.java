@@ -1,6 +1,6 @@
 package com.cognixia.util;
 
-import com.cognixia.dao.Session.SessionDaoImpl;
+
 import com.cognixia.model.Session;
 import com.cognixia.service.SessionService;
 import jakarta.servlet.http.HttpServletRequest;

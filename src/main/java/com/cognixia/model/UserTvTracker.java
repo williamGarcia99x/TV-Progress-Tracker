@@ -3,6 +3,7 @@ package com.cognixia.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.sql.Date;
@@ -10,6 +11,8 @@ import java.sql.Date;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 public class UserTvTracker {
 
     private int trackerId;
@@ -20,7 +23,7 @@ public class UserTvTracker {
     private Integer currentSeason;
     private Double userRating;
     private String notes;
-    private String dateAdded;
+    private Date dateAdded;
     private Date dateStarted;
     private Date dateCompleted;
 

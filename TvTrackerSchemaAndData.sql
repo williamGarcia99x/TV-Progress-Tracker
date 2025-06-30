@@ -49,7 +49,7 @@ CREATE TABLE user_tv_tracker (
     watch_status ENUM('planning', 'watching', 'completed') NOT NULL,
     episodes_watched INT,
     current_season INT,
-    user_rating DECIMAL(2,1) CHECK (user_rating BETWEEN 1.0 AND 10.0),  -- User's personal rating (1.0-10.0)
+    user_rating DECIMAL(3,1) CHECK (user_rating BETWEEN 1.0 AND 10.0),  -- User's personal rating (1.0-10.0)
     notes TEXT,  -- User's personal notes about the show
     date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     date_started TIMESTAMP NULL,  -- When user started watching

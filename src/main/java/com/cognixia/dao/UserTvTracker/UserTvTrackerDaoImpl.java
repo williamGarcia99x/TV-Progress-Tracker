@@ -2,16 +2,16 @@ package com.cognixia.dao.UserTvTracker;
 
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
-import com.cognixia.exception.UserTvTrackerInsertionException;
+import com.cognixia.exception.UserTvTrackerException;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import com.cognixia.util.ConnectionFactory;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
-import java.sql.Types;
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 
 @Repository
@@ -20,13 +20,14 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
     /**
      * Tracks a TV show for a user by inserting the show, its genres, and tracking information into the database.
      * If the show already exists, it will not be inserted again and the genre information will remain unchanged.
-     * @param trackerDto
+     *
      * @param showDto
-     * @throws UserTvTrackerInsertionException
+     * @param tvTracker
+     * @throws UserTvTrackerException
      */
     // Implement the methods from UserTvTrackerDao interface
     @Override
-    public void trackShow(TrackShowRequest.UserTvTrackerDto trackerDto, TrackShowRequest.TvShowDto showDto) throws UserTvTrackerInsertionException, ServerException {
+    public void trackShow(TrackShowRequest.TvShowDto showDto, UserTvTracker tvTracker) throws UserTvTrackerException, ServerException {
 
         final String INSERT_SHOW   = "INSERT IGNORE INTO tv_shows (show_id, original_name) VALUES (?, ?)";
         final String INSERT_GENRE  = "INSERT IGNORE INTO tv_show_genres (show_id, genre_id) VALUES (?, ?)";
@@ -59,35 +60,34 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
             /* 3️⃣  user_tv_tracker ------------------------------------------- */
             try (PreparedStatement psTrack = conn.prepareStatement(INSERT_TRACK)) {
 
-                psTrack.setInt   (1, trackerDto.getUserId());
-                psTrack.setInt   (2, trackerDto.getShowId());
-                psTrack.setString(3, trackerDto.getStatus().name().toLowerCase());
+                psTrack.setInt   (1, tvTracker.getUserId());
+                psTrack.setInt   (2, tvTracker.getShowId());
+                psTrack.setString(3, tvTracker.getStatus().name().toLowerCase());
 
-                if (trackerDto.getStatus() != WatchStatus.WATCHING) {
-                    psTrack.setNull(4, java.sql.Types.INTEGER);
-                    psTrack.setNull(5, java.sql.Types.INTEGER);
+                if (tvTracker.getStatus() != WatchStatus.WATCHING) {
+                    psTrack.setNull(4, Types.INTEGER);
+                    psTrack.setNull(5, Types.INTEGER);
                 } else {
-                    psTrack.setInt(4, trackerDto.getEpisodesWatched());
-                    psTrack.setInt(5, trackerDto.getCurrentSeason());
+                    psTrack.setInt(4, tvTracker.getEpisodesWatched());
+                    psTrack.setInt(5, tvTracker.getCurrentSeason());
                 }
 
 
-                if (trackerDto.getUserRating() == null)
+                if (tvTracker.getUserRating() == null)
                     psTrack.setNull(6, Types.DOUBLE);
-                else psTrack.setDouble(6, trackerDto.getUserRating());
+                else psTrack.setDouble(6, tvTracker.getUserRating());
 
-
-                if (trackerDto.getNotes() == null)
+                if (tvTracker.getNotes() == null)
                     psTrack.setNull(7, Types.VARCHAR);
-                else psTrack.setString(7, trackerDto.getNotes());
+                else psTrack.setString(7, tvTracker.getNotes());
 
-                if (trackerDto.getDateStarted() == null)
+                if (tvTracker.getDateStarted() == null)
                     psTrack.setNull(8, Types.DATE);
-                else psTrack.setDate(8, trackerDto.getDateStarted());
+                else psTrack.setDate(8, tvTracker.getDateStarted());
 
-                if (trackerDto.getDateCompleted() == null)
+                if (tvTracker.getDateCompleted() == null)
                     psTrack.setNull(9, Types.DATE);
-                else psTrack.setDate(9, trackerDto.getDateCompleted());
+                else psTrack.setDate(9, tvTracker.getDateCompleted());
 
                 if (psTrack.executeUpdate() == 0)
                     throw new ServerException("Failed to track show: no rows inserted.");
@@ -104,7 +104,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
 
                 if(ex.getErrorCode() == 1062) {
                     // Duplicate entry error code for MySQL
-                    throw new UserTvTrackerInsertionException("You are already tracking this show.");
+                    throw new UserTvTrackerException("You are already tracking this show.");
                 }
 
 
@@ -117,49 +117,132 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
 
     }
 
+    public void updateTracking(UserTvTracker tracker) throws UserTvTrackerException, ServerException {
+        String updateSql = """
+                UPDATE user_tv_tracker 
+                SET watch_status = ?,
+                    episodes_watched = ?,
+                    current_season = ?,
+                    user_rating = ?,
+                    notes = ?,
+                    date_started = ?,
+                    date_completed = ?
+                WHERE tracker_id = ?;""";
 
+        try (Connection conn = ConnectionFactory.getConnection();
+            PreparedStatement pstmt = conn.prepareStatement(updateSql)){
+            pstmt.setString(1, tracker.getStatus().name().toLowerCase());
 
-    public void insertToTracker(UserTvTracker tracker) {
-        // Example implementation of tracking a show
-        try  {
-            Connection connection = ConnectionFactory.getConnection();
-            // Logic to insert the user and tvShow into the database
-            String sql = "INSERT INTO user_tv_tracker (user_id, show_id, watch_status, episodes_watched" +
-                    ", current_season, user_rating, notes, date_started, date_completed) VALUES (?,?,?,?,?,?,?,?,?);";
-            PreparedStatement preparedStatement = connection.prepareStatement(sql);
-            preparedStatement.setInt(1, tracker.getUserId());
-            preparedStatement.setInt(2, tracker.getShowId());
-            preparedStatement.setString(3, tracker.getStatus().toString());
-//            // if tracker.getStatus is not WATCHING, then episodesWatched and currentSeason can be null
+            //if status is NOT watching, then nullify episodes_watched and current_season
             if (tracker.getStatus() != WatchStatus.WATCHING) {
-                preparedStatement.setNull(4, java.sql.Types.INTEGER); // Set to NULL if not WATCHING
-                preparedStatement.setNull(5, java.sql.Types.INTEGER); // Set to NULL if not WATCHING
+                pstmt.setNull(2, Types.INTEGER);
+                pstmt.setNull(3, Types.INTEGER);
             } else {
-                preparedStatement.setInt(4, tracker.getEpisodesWatched());
-                preparedStatement.setInt(5, tracker.getCurrentSeason());
+                pstmt.setInt(2, tracker.getEpisodesWatched());
+                pstmt.setInt(3, tracker.getCurrentSeason());
             }
 
-            //Check if userRating is null or 0, and set it to NULL in the database
-            if(tracker.getUserRating() == null){
-                preparedStatement.setNull(6, java.sql.Types.DOUBLE); // Set to NULL if userRating is 0
-            } else {
-                preparedStatement.setDouble(6, tracker.getUserRating());
+            if (tracker.getUserRating() == null)
+                pstmt.setNull(4, Types.DOUBLE);
+             else pstmt.setDouble(4, tracker.getUserRating());
+
+            if (tracker.getNotes() == null)
+                pstmt.setNull(5, Types.VARCHAR);
+             else pstmt.setString(5, tracker.getNotes());
+
+            if (tracker.getDateStarted() == null)
+                pstmt.setNull(6, Types.DATE);
+             else pstmt.setDate(6, tracker.getDateStarted());
+
+            if (tracker.getDateCompleted() == null)
+                pstmt.setNull(7, Types.DATE);
+            else pstmt.setDate(7, tracker.getDateCompleted());
+
+            pstmt.setInt(8, tracker.getTrackerId());
+
+            if(pstmt.executeUpdate() != 1) {
+                throw new UserTvTrackerException("Failed to update tracking information. Resource not found");
             }
 
-            preparedStatement.setString(7, tracker.getNotes());
-            preparedStatement.setDate(8, tracker.getDateStarted());
-            preparedStatement.setDate(9, tracker.getDateCompleted());
-            // Assuming dateAdded is automatically set by the database, so not included in the insert statement
-            // Execute the insert statement
-            if(preparedStatement.executeUpdate() == 0) {
-                // Handle the case where no rows were affected, indicating failure to insert
-                throw new SQLException("Failed to track show: No rows affected.");
+        }catch (SQLException e) {
+            throw new ServerException("Failed to update tracking information: " + e.getMessage());
+        }
+
+    }
+
+    public void deleteTracking(int trackerId) throws UserTvTrackerException, ServerException {
+        String deleteSql = "DELETE FROM user_tv_tracker WHERE tracker_id = ?;";
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(deleteSql)) {
+
+            pstmt.setInt(1, trackerId);
+            if(pstmt.executeUpdate() != 1) {
+                throw new UserTvTrackerException("Failed to delete tracking information: Does the tracker_id exist?");
             }
+
         } catch (SQLException e) {
-            // Handle SQL exceptions, such as connection issues or SQL syntax errors
-            throw new RuntimeException(e);
+            throw new ServerException("Failed to delete tracking information: " + e.getMessage());
         }
     }
+
+    public Optional<UserTvTracker> getTrackerById(int trackerId){
+        String sql = "SELECT * FROM user_tv_tracker WHERE tracker_id = ?;";
+        UserTvTracker tracker = null;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, trackerId);
+            ResultSet rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                tracker = mapRowToUserTvTracker(rs);
+            }
+        } catch (SQLException e) {
+            throw new ServerException("Failed to retrieve tracker by ID: " + e.getMessage());
+        }
+
+        return Optional.ofNullable(tracker);
+    }
+
+    public List<UserTvTracker> getTrackersByUserId(int userId) throws ServerException{
+        String sql = "SELECT * FROM user_tv_tracker WHERE user_id = ? ORDER BY date_added;";
+        List<UserTvTracker> trackers = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                trackers.add(mapRowToUserTvTracker(rs));
+            }
+        } catch (SQLException e) {
+            throw new ServerException("Failed to retrieve trackers by user ID: " + e.getMessage());
+        }
+
+        return trackers;
+    }
+
+    private UserTvTracker mapRowToUserTvTracker(ResultSet rs) throws SQLException {
+        return new UserTvTracker(
+                rs.getInt("tracker_id"),
+                rs.getInt("user_id"),
+                rs.getInt("show_id"),
+                WatchStatus.valueOf(rs.getString("watch_status").toUpperCase()),
+                rs.getInt("episodes_watched"),
+                rs.getInt("current_season"),
+                rs.getDouble("user_rating"),
+                rs.getString("notes"),
+                rs.getDate("date_added"),
+                rs.getDate("date_started"),
+                rs.getDate("date_completed")
+        );
+    }
+
+
 
 
 }
