@@ -15,62 +15,39 @@ public class UserDaoImpl implements UserDao{
 
     // This method's logic has been transferred to UserService since it does not include any code directly
     //interacting with the database.
-    @Override
-    public Optional<User> authenticateUser(String username, String password) {
-//        // Authenticate user. Compare the stored hashed password for the user with the given username against the provided
-//        //password
-//        Optional<User> userOptional = getUserByUsername(username);
-//
-//        //Username not found
-//        if(userOptional.isEmpty()){
-//            throw new UserAuthenticationException("Username not found: " + username);
-//        }
-//
-//        //Password is incorrect, return user object
-//        if(!PasswordUtil.checkPassword(password,userOptional.get().getPassword_hash())){
-//            throw new UserAuthenticationException("Password is incorrect for username: " + username);
-//        }
-//
-//        //Password is incorrect.
-//        return userOptional;
-        return Optional.empty();
-    }
+
 
     @Override
-    public Optional<User> createUser(User user) throws UserRegistrationException{
+    public Optional<User> createUser(User user) throws UserRegistrationException {
+        // Use try-with-resources to ensure the connection is closed automatically
+        try (Connection connection = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement(
+                     "INSERT INTO users (username, password_hash) VALUES (?, ?);",
+                     PreparedStatement.RETURN_GENERATED_KEYS)) {
 
-        Connection connection = null;
-        try {
-            connection = ConnectionFactory.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            PreparedStatement pstmt = connection.prepareStatement("INSERT INTO users (username, password_hash) VALUES (?,?);",
-                    PreparedStatement.RETURN_GENERATED_KEYS);
+            // Set the parameters for the prepared statement
             pstmt.setString(1, user.getUsername());
             pstmt.setString(2, user.getPassword_hash());
 
+            // Execute the update and retrieve the generated keys
             pstmt.executeUpdate();
-
-            ResultSet generatedPk = pstmt.getGeneratedKeys();
-            if(generatedPk.next()){
-                return Optional.of(new User(generatedPk.getInt(1), user.getUsername(),user.getPassword_hash(), user.getCreatedAt()));
+            try (ResultSet generatedPk = pstmt.getGeneratedKeys()) {
+                if (generatedPk.next()) {
+                    // Return the created user with the generated ID
+                    return Optional.of(
+                            new User(generatedPk.getInt(1), user.getUsername(), user.getPassword_hash(), user.getCreatedAt()));
+                }
             }
 
-        } catch (SQLIntegrityConstraintViolationException e){
-            // This exception is thrown when there is a unique constraint violation, such as duplicate username
-            // Log the exception or handle it as needed
+        } catch (SQLIntegrityConstraintViolationException e) {
+            // Handle unique constraint violations (e.g., duplicate username)
             throw new UserRegistrationException("Username already exists: " + user.getUsername());
-
         } catch (SQLException e) {
-            //Log the exception or handle it as needed
-            //Consider  custom exception throwing here
-            throw new RuntimeException(e);
+            // Handle other SQL exceptions
+            throw new RuntimeException("Error while creating user: " + e.getMessage());
         }
 
-
-        // This should not execute under any circumstances, but if it does, return an empty Optional
+        // Return an empty Optional if no user was created
         return Optional.empty();
     }
 

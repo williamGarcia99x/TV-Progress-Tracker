@@ -19,7 +19,7 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(tokenAuthInterceptor)
-                .addPathPatterns("/tracker/**"); // protect POST /tracker (and future GET/PUT)
+                .addPathPatterns("/tracker/**","/api/auth/logout"); // protect POST /tracker (and future GET/PUT)
     }
 
 }

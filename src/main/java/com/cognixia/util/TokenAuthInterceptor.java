@@ -33,9 +33,6 @@ public class TokenAuthInterceptor implements HandlerInterceptor {
      public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
          String authHeader = request.getHeader("Authorization");
 
-
-
-
          if(authHeader == null || !authHeader.startsWith("Bearer ")) {
              response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Missing or invalid Authorization header");
              return false; // Unauthorized access
@@ -43,7 +40,7 @@ public class TokenAuthInterceptor implements HandlerInterceptor {
 
          //Valid authorization header. Proceed with verifying session
 
-         String token = authHeader.substring(7); //Obtain the token that's after the "Bearer
+         String token = authHeader.substring(7); //Obtain the token after the "Bearer
 
          //Look up the session based on the token
          Optional<Session> sessionOptional = sessionDao.getSessionByToken(token);
@@ -55,7 +52,7 @@ public class TokenAuthInterceptor implements HandlerInterceptor {
          }
          Session session = sessionOptional.get();
 
-
+         //Session is expired so user is in logged out state
          if(!LocalDateTime.now().isBefore(session.getExpiresAt())){
              response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Session token has expired");
              return false; // Unauthorized access
@@ -65,4 +62,8 @@ public class TokenAuthInterceptor implements HandlerInterceptor {
          request.setAttribute("AUTH_USER_ID", session.getUserId());
          return true;
      }
+
+
+
+
 }

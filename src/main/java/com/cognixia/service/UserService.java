@@ -22,7 +22,7 @@ public class UserService {
     }
 
 
-    public Optional<User> createUser(String username, String password) throws UserRegistrationException{
+    public User createUser(String username, String password) throws UserRegistrationException{
         // Logic to create a user using UserDao
         // This would typically involve hashing the password and saving the user to the database.
 
@@ -32,30 +32,17 @@ public class UserService {
         }
 
         String hashedPassword = PasswordUtil.hashPassword(password);
-        // Dummy ID value
-        return userDao.createUser(new User(-1, username, hashedPassword, new Date()));
-    }
-    
-    // method for authenticating user
-    public Optional<User> authenticateUser(String username, String password) throws UserAuthenticationException {
-        // Authenticate user. Compare the stored hashed password for the user with the given username against the provided
-        //password
-        Optional<User> userOptional = userDao.getUserByUsername(username);
+        // Test fake ID value
 
-        //Username not found
-        if(userOptional.isEmpty()){
-            throw new UserAuthenticationException("Username not found: " + username);
+        Optional<User> createdUser = userDao.createUser(new User(-1, username, hashedPassword, new Date()));
+
+        if(createdUser.isEmpty()){
+            // If the user creation fails, throw an exception
+            throw new UserRegistrationException("Failed to create user with username: " + username);
         }
 
-        //Password is incorrect, return user object
-        if(!PasswordUtil.checkPassword(password,userOptional.get().getPassword_hash())){
-            throw new UserAuthenticationException("Password is incorrect for username: " + username);
-        }
-
-        //Password is incorrect.
-        return userOptional;
+        return createdUser.get();
     }
-
 
     //create a getUserByUsername method
     public Optional<User> getUserByUsername(String username){
