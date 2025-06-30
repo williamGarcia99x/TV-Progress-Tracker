@@ -1,4 +1,4 @@
-package com.cognixia.dao;
+package com.cognixia.dao.UserTvTracker;
 
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.UserTvTrackerInsertionException;

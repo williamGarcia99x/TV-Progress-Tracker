@@ -11,20 +11,19 @@ import org.springframework.context.ApplicationContext;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @SpringBootApplication
 public class App {
 
     public static void main(String[] args) {
-        var context = SpringApplication.run(App.class, args);
-
-
-        //test connection
-        try {
-            Connection connection = ConnectionFactory.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
+        SpringApplication.run(App.class, args);
+//        //test connection
+//        try {
+//            Connection connection = ConnectionFactory.getConnection();
+//        } catch (SQLException e) {
+//            throw new RuntimeException(e);
+//        }
 
 
 //        UserTvTrackerService service = context.getBean(UserTvTrackerService.class);

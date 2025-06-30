@@ -3,6 +3,7 @@ package com.cognixia.controller;
 
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.service.UserTvTrackerService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -22,17 +23,20 @@ public class TrackerController {
     }
 
 
-    //Todo add authentication and authorization to this endpoint
-    //Handle exception handling
+
+
     @PostMapping("/tracker")
-    public ResponseEntity<Void> trackShow(@RequestBody TrackShowRequest request) {
+    public ResponseEntity<Void> trackShow(HttpServletRequest request, @RequestBody TrackShowRequest trackShowRequest) {
+
+        Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
+
+        if(userIdOnRequest != trackShowRequest.getUserTvTracker().getUserId()){
+            //If the user ID in the TrackShowRequest does not match the authenticated user ID, return a 403 Forbidden response
+            return ResponseEntity.status(403).build(); // Forbidden
+        }
 
         //Call the trackShow method from UserTvTrackerService
-        userTvTrackerService.trackShow(request.getUserTvTracker(), request.getTvShow());
-
-
-
-
+        userTvTrackerService.trackShow(trackShowRequest.getUserTvTracker(), trackShowRequest.getTvShow());
         return ResponseEntity.ok().build();
 
     }

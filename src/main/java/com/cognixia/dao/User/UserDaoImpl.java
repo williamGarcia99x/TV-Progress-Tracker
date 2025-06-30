@@ -1,4 +1,4 @@
-package com.cognixia.dao;
+package com.cognixia.dao.User;
 
 
 import com.cognixia.exception.UserRegistrationException;

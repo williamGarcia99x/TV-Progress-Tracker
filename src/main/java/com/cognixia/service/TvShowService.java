@@ -1,11 +1,10 @@
 package com.cognixia.service;
 
-import com.cognixia.dao.TvShowDao;
+import com.cognixia.dao.TvShow.TvShowDao;
 import com.cognixia.model.TvShow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.sql.Connection;
 import java.util.Optional;
 
 

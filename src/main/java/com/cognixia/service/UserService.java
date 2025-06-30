@@ -1,11 +1,10 @@
 package com.cognixia.service;
 
-import com.cognixia.dao.UserDao;
+import com.cognixia.dao.User.UserDao;
 import com.cognixia.exception.UserAuthenticationException;
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.PasswordUtil;
-import lombok.AllArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -55,6 +54,12 @@ public class UserService {
 
         //Password is incorrect.
         return userOptional;
+    }
+
+
+    //create a getUserByUsername method
+    public Optional<User> getUserByUsername(String username){
+        return userDao.getUserByUsername(username);
     }
 
 

@@ -1,7 +1,6 @@
-package com.cognixia.dao;
+package com.cognixia.dao.UserTvTracker;
 
 import com.cognixia.dto.TrackShowRequest;
-import com.cognixia.exception.UserAuthenticationException;
 import com.cognixia.exception.UserTvTrackerInsertionException;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;

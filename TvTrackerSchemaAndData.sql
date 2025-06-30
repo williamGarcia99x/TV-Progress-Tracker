@@ -10,6 +10,14 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE sessions (
+    token VARCHAR(255) PRIMARY KEY,
+    user_id INT NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    FOREIGN KEY foreign_key_sessions (user_id) REFERENCES users(user_id)
+);
+
+
 -- Minimal TV shows table - only store what's needed for tracking
 -- All other show details come from TMDb API calls
 CREATE TABLE tv_shows (

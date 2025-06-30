@@ -1,4 +1,4 @@
-package com.cognixia.dao;
+package com.cognixia.dao.TvShow;
 
 import com.cognixia.model.TvShow;
 
