@@ -14,6 +14,7 @@ import java.util.UUID;
 @Service
 public class SessionService {
 
+    public static record SessionData(String token, LocalDateTime expiresAt) {}
 
     private final SessionDaoImpl sessionDao;
 
@@ -25,7 +26,7 @@ public class SessionService {
 
     //create a session for a user
     //this will generate a token and set the expiration time. UserId is checked at higher levels
-    public String createSession(int userId) throws ServerException{
+    public SessionData createSession(int userId) throws ServerException{
 
         // Using UUID for simplicity
         String token = UUID.randomUUID().toString();
@@ -36,7 +37,7 @@ public class SessionService {
         // For example, you could store it in a database or an in-memory cache
         sessionDao.createSession(new Session(token, userId, expirationTime));
 
-        return token; // Return the generated token
+        return new SessionData(token, expirationTime);
     }
 
 

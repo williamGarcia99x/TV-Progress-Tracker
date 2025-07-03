@@ -2,6 +2,7 @@ package com.cognixia.util;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
@@ -24,5 +25,16 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
 
     }
+
+    // this is necessary
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**") // allow all endpoints
+                .allowedOrigins("http://localhost:3000") // allow frontend origin
+                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedHeaders("*")
+                .allowCredentials(true); // if you're using cookies or auth headers
+    }
+
 
 }

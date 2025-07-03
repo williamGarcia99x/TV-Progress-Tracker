@@ -57,28 +57,25 @@ public class UserDaoImpl implements UserDao{
         return Optional.empty();
     }
 
+
     @Override
     public Optional<User> getUserByUsername(String username) {
 
-        Connection connection = null;
-        try {
-            connection = ConnectionFactory.getConnection();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        try {
-            PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM users WHERE username = ?;");
+        try (Connection connection = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = connection.prepareStatement("SELECT * FROM users WHERE username = ?;")) {
+
             pstmt.setString(1, username);
 
-            ResultSet rs  = pstmt.executeQuery();
-            if(rs.next()){
-                User user = mapRowToUser(rs);
-                return Optional.of(user);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    User user = mapRowToUser(rs);
+                    return Optional.of(user);
+                }
             }
 
         } catch (SQLException e) {
             // Log the exception or handle it as needed
-            throw new RuntimeException(e);
+            throw new ServerException(e.getMessage());
         }
         // If no user is found, return an empty Optional
         return Optional.empty();

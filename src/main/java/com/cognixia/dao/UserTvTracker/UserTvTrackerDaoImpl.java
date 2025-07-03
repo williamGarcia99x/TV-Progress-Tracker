@@ -194,11 +194,13 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, trackerId);
-            ResultSet rs = pstmt.executeQuery();
 
-            if (rs.next()) {
-                tracker = mapRowToUserTvTracker(rs);
+            try(ResultSet rs = pstmt.executeQuery();){
+                if (rs.next()) {
+                    tracker = mapRowToUserTvTracker(rs);
+                }
             }
+
         } catch (SQLException e) {
             throw new ServerException("Failed to retrieve tracker by ID: " + e.getMessage());
         }
@@ -214,11 +216,14 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
 
             pstmt.setInt(1, userId);
-            ResultSet rs = pstmt.executeQuery();
 
-            while (rs.next()) {
-                trackers.add(mapRowToUserTvTracker(rs));
+            try(ResultSet rs = pstmt.executeQuery();){
+                while (rs.next()) {
+                    trackers.add(mapRowToUserTvTracker(rs));
+                }
             }
+
+
         } catch (SQLException e) {
             throw new ServerException("Failed to retrieve trackers by user ID: " + e.getMessage());
         }

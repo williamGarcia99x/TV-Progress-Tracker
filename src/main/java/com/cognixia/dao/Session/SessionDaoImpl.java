@@ -56,11 +56,14 @@ public class SessionDaoImpl {
              PreparedStatement pstmt = conn.prepareStatement(getSessionQuery)) {
 
             pstmt.setString(1, token);
-            ResultSet rs = pstmt.executeQuery();
 
-            if (rs.next()) {
-                return Optional.of(mapRowToSession(rs));
+            try(ResultSet rs = pstmt.executeQuery()) {
+                // If a session is found, map it to a Session object and return it
+                if (rs.next()) {
+                    return Optional.of(mapRowToSession(rs));
+                }
             }
+
         } catch (SQLException e) {
             throw new ServerException("Error retrieving session: " + e.getMessage());
         }

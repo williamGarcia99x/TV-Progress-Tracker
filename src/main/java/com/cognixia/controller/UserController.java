@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @RestController
@@ -20,7 +21,7 @@ import java.util.Optional;
 public class UserController {
 
     private record AuthRequest(String username, String password) {}
-    private record AuthResponse(String token, int userId){}
+    private record AuthResponse(String token, int userId, LocalDateTime expiresAt){}
 
 
     private final UserService userService;
@@ -43,8 +44,8 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid username or password");
         }
 
-        String token = sessionService.createSession(userOptional.get().getUserId());
-        return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse(token, userOptional.get().getUserId()));
+        var result = sessionService.createSession(userOptional.get().getUserId());
+        return ResponseEntity.status(HttpStatus.OK).body(new AuthResponse(result.token(), userOptional.get().getUserId(), result.expiresAt()));
     }
 
     @RequestMapping(method = RequestMethod.POST, path = "/register")
