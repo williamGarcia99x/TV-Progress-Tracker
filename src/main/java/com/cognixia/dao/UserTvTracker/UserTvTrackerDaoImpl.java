@@ -3,6 +3,7 @@ package com.cognixia.dao.UserTvTracker;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
+import com.cognixia.model.User;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import com.cognixia.util.ConnectionFactory;
@@ -206,6 +207,32 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
         }
 
         return Optional.ofNullable(tracker);
+    }
+
+    public Optional<UserTvTracker> getTrackingByUserIdAndShowID(int userId, int showId) throws ServerException{
+        String sql = "SELECT * FROM user_tv_tracker WHERE user_id = ? AND show_id = ?;";
+        UserTvTracker tracker = null;
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, showId);
+
+
+            try(ResultSet rs = pstmt.executeQuery();){
+                if (rs.next()) {
+                    tracker = mapRowToUserTvTracker(rs);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new ServerException("Failed to retrieve tracker by user ID and show ID: " + e.getMessage());
+        }
+
+        //If the tracker is not found, an empty optional is returned.
+        return Optional.ofNullable(tracker);
+
     }
 
     public List<UserTvTracker> getTrackersByUserId(int userId) throws ServerException{

@@ -13,7 +13,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/tracker") // Base URL for the controller
@@ -28,7 +30,7 @@ public class TrackerController {
     }
 
 
-    @GetMapping()
+    @GetMapping("/")
     @ResponseStatus(HttpStatus.OK) //HTTP status code for successful retrieval
     public ResponseEntity<List<UserTvTracker>> getTrackers(HttpServletRequest request) {
 
@@ -43,6 +45,25 @@ public class TrackerController {
 
         return ResponseEntity.ok(trackers); // Return the list of trackers
     }
+
+
+    @GetMapping(params = {"user-id", "show-id"}) // Endpoint to get a specific tracker by ID
+    public ResponseEntity<?> getTrackerByUserAndShow(HttpServletRequest request, @RequestParam("user-id") Integer userId, @RequestParam("show-id") Integer showId){
+
+        Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
+
+        if(userIdOnRequest != userId){
+            //If the user ID in the request does not match the authenticated user ID, return a 403 Forbidden response
+            return ResponseEntity.status(403).build(); // Forbidden
+        }
+
+        // Call the getTrackingByUserIdAndShowId method from UserTvTrackerService
+        Optional<UserTvTracker> userTvTrackerOptional = userTvTrackerService.getTrackingByUserIdAndShowId(userId, showId);
+
+       return ResponseEntity.ok(userTvTrackerOptional.isPresent() ? userTvTrackerOptional.get() : Collections.emptyMap());
+    }
+
+
 
     @PostMapping()
     @ResponseStatus(HttpStatus.CREATED) //HTTP status code for successful creation

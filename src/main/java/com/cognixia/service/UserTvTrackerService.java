@@ -42,6 +42,8 @@ public class UserTvTrackerService {
     }
 
 
+
+
     public void updateTracking(UserTvTracker tracker) throws UserTvTrackerException, ServerException{
 
         validateTracker(tracker);
@@ -50,6 +52,16 @@ public class UserTvTrackerService {
 
     }
 
+
+
+    public Optional<UserTvTracker> getTrackingByUserIdAndShowId(Integer userId, Integer showId) throws UserTvTrackerException, ServerException{
+
+        if(userId == null || showId == null){
+            throw new UserTvTrackerException("User ID and Show ID must not be null.");
+        }
+
+        return userTvTrackerDao.getTrackingByUserIdAndShowID(userId, showId);
+    }
 
     public UserTvTracker getTrackingById(int trackerId) throws UserTvTrackerException, ServerException {
         //Check if the tracker exists
@@ -73,11 +85,15 @@ public class UserTvTrackerService {
         //If the watch status is WATCHING, then episodes watched must be greater than 0 and
         //current season must be greater than 0
         if (tracker.getStatus() == WatchStatus.WATCHING) {
+            if(tracker.getEpisodesWatched() == null || tracker.getCurrentSeason() == null){
+                throw new UserTvTrackerException("Episodes watched and seasons watched must both be greater than 0 when" +
+                        "you are watching a show.");
+            }
             if (tracker.getEpisodesWatched() < 0) {
-                throw new UserTvTrackerException("Episodes watched must be greater than 0 when status is WATCHING.");
+                throw new UserTvTrackerException("Episodes watched must be greater than 0 when you are watching a show.");
             }
             if (tracker.getCurrentSeason() <= 0) {
-                throw new UserTvTrackerException("Current season must be greater than 0 when status is WATCHING.");
+                throw new UserTvTrackerException("Current season must be greater than 0 when you are watching a show.");
             }
 
         } else {
@@ -86,19 +102,26 @@ public class UserTvTrackerService {
             tracker.setCurrentSeason(null);
         }
 
-        //User rating must be between 1 and 10, inclusive
-        if (tracker.getUserRating() != null && (tracker.getUserRating() < 1 || tracker.getUserRating() > 10)) {
-            throw new UserTvTrackerException("User rating must be between 1 and 10: " + tracker.getUserRating());
+        if(tracker.getUserRating() != null){
+            //if user is planning on watching the show, they cannot rate it.
+            if(tracker.getStatus() == WatchStatus.PLANNING){
+                throw new UserTvTrackerException("You cannot rate a show you're not watching or haven't watched.");
+            }
+
+            if(tracker.getUserRating() < 1 || tracker.getUserRating() > 10){
+                throw new UserTvTrackerException("User rating must be between 1 and 10: " + tracker.getUserRating());
+            }
         }
+
 
         // If the watch status is WATCHING or COMPLETED, then start date must be set
         if ((tracker.getStatus() == WatchStatus.WATCHING || tracker.getStatus() == WatchStatus.COMPLETED) && tracker.getDateStarted() == null) {
-            throw new UserTvTrackerException("Date started must be set when status is WATCHING or COMPLETED.");
+            throw new UserTvTrackerException("Date started must be set when you're watching the show or have completed it.");
         }
 
         //if the watch status is COMPLETED, then date completed must be set
         if (tracker.getStatus() == WatchStatus.COMPLETED && tracker.getDateCompleted() == null) {
-            throw new UserTvTrackerException("Date completed must be set when status is COMPLETED.");
+            throw new UserTvTrackerException("Date completed must be set when you're watching the show or have completed it.");
         }
 
         //if both dateStarted and dateCompleted are not null, dateStarted must be before dateCompleted
@@ -109,12 +132,12 @@ public class UserTvTrackerService {
 
         //If dateStarted is not null, then status must be WATCHING or COMPLETED
         if (tracker.getDateStarted() != null && tracker.getStatus() == WatchStatus.PLANNING) {
-            throw new UserTvTrackerException("Date started cannot be set unless status is WATCHING or COMPLETED.");
+            throw new UserTvTrackerException("Date started cannot be set unless you're watching the show or have completed it.");
         }
 
         //If dateCompleted is not null, then status must be COMPLETED
         if (tracker.getDateCompleted() != null && tracker.getStatus() != WatchStatus.COMPLETED) {
-            throw new UserTvTrackerException("Date completed cannot be set unless status is COMPLETED.");
+            throw new UserTvTrackerException("Date completed cannot be set unless you completed the show.");
         }
 
     }

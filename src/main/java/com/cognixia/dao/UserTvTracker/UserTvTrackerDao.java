@@ -23,4 +23,6 @@ public interface UserTvTrackerDao {
 
     public List<UserTvTracker> getTrackersByUserId(int userId) throws ServerException;
 
+    public Optional<UserTvTracker> getTrackingByUserIdAndShowID(int userId, int showId) throws ServerException;
+
 }
