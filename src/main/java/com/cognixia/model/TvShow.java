@@ -1,16 +1,16 @@
 package com.cognixia.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Date;
 
 @Getter
+@Setter
 @AllArgsConstructor
+@NoArgsConstructor
 @ToString
 public class TvShow {
     private int showId;
     private String originalName;
-    private Date created_at;
+    private Date createdAt;
 }

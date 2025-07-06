@@ -1,9 +1,11 @@
 package com.cognixia.service;
 
 import com.cognixia.dao.UserTvTracker.UserTvTrackerDao;
+import com.cognixia.dto.ShowSummaryDTO;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
+import com.cognixia.model.TvShow;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 //The methods contain herein are protected, meaning that they will be invoked only after the
 //user has been authenticated and authorized to perform the action.
@@ -144,5 +147,21 @@ public class UserTvTrackerService {
 
     public List<UserTvTracker> getTrackersByUserId(Integer userIdOnRequest) throws ServerException {
         return userTvTrackerDao.getTrackersByUserId(userIdOnRequest);
+    }
+
+
+    public List<ShowSummaryDTO> getTrackedShows(Integer userIdOnRequest, WatchStatus status) throws ServerException{
+        List<TvShow> list = userTvTrackerDao.getTrackedShowsByUserId(userIdOnRequest, status);
+
+        return list.stream()
+                .map(tv -> new ShowSummaryDTO(
+                        tv.getShowId(),
+                        tv.getOriginalName(),     // as `name`
+                        tv.getOriginalName(),     // as `original_name`
+                        null                      // poster_path not stored yet
+                ))
+                .collect(Collectors.toList());
+
+
     }
 }

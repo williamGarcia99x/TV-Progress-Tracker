@@ -3,6 +3,7 @@ package com.cognixia.dao.UserTvTracker;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
+import com.cognixia.model.TvShow;
 import com.cognixia.model.User;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
@@ -258,6 +259,53 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
         return trackers;
     }
 
+    /**
+     * Returns the list of TV shows a user is tracking.
+     *
+     * <pre>
+     * SELECT ts.show_id, ts.original_name, ts.created_at
+     * FROM   user_tv_tracker utt
+     * JOIN   tv_shows ts ON utt.show_id = ts.show_id
+     * WHERE  utt.user_id = ?;
+     * </pre>
+     *
+     * @param userId the authenticated user’s ID
+     * @return list of {@code TvShow} records (may be empty)
+     * @throws ServerException if a SQL or connection error occurs
+     */
+    public List<TvShow> getTrackedShowsByUserId(int userId, WatchStatus status) throws ServerException {
+        final String sql =
+                "SELECT ts.show_id, ts.original_name, ts.created_at " +
+                        "FROM user_tv_tracker utt " +
+                        "JOIN tv_shows ts ON utt.show_id = ts.show_id " +
+                        "WHERE utt.user_id = ? AND utt.watch_status = ? " +
+                        "ORDER BY ts.created_at;";
+
+        List<TvShow> shows = new ArrayList<>();
+
+        try (Connection conn = ConnectionFactory.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(sql)) {
+
+            pstmt.setInt(1, userId);
+            pstmt.setString(2, status.toString());
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    shows.add(mapRowToTvShow(rs));
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new ServerException(
+                    "Failed to retrieve tracked shows for user " + userId + ": " + e.getMessage()
+            );
+        }
+
+        return shows;
+    }
+
+
+
     private UserTvTracker mapRowToUserTvTracker(ResultSet rs) throws SQLException {
         return new UserTvTracker(
                 rs.getInt("tracker_id"),
@@ -272,6 +320,16 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
                 rs.getDate("date_started"),
                 rs.getDate("date_completed")
         );
+    }
+    /**
+     * Helper that converts a {@link ResultSet} row into a {@link TvShow}.
+     */
+    private TvShow mapRowToTvShow(ResultSet rs) throws SQLException {
+        TvShow tvShow = new TvShow();
+        tvShow.setShowId(rs.getInt("show_id"));
+        tvShow.setOriginalName(rs.getString("original_name"));
+        tvShow.setCreatedAt(rs.getDate("created_at"));
+        return tvShow;
     }
 
 

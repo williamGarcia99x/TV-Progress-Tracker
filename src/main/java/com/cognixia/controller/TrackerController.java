@@ -1,11 +1,14 @@
 package com.cognixia.controller;
 
 
+import com.cognixia.dto.ShowSummaryDTO;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
+import com.cognixia.model.TvShow;
 import com.cognixia.model.User;
 import com.cognixia.model.UserTvTracker;
+import com.cognixia.model.WatchStatus;
 import com.cognixia.service.UserTvTrackerService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,21 +33,40 @@ public class TrackerController {
     }
 
 
-    @GetMapping("/")
+//    @GetMapping("/")
+//    @ResponseStatus(HttpStatus.OK) //HTTP status code for successful retrieval
+//    public ResponseEntity<List<UserTvTracker>> getTrackers(HttpServletRequest request) {
+//
+//        Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
+//
+//        // Call the getTrackers method from UserTvTrackerService
+//        List<UserTvTracker> trackers = userTvTrackerService.getTrackersByUserId(userIdOnRequest);
+//
+//        //regardless of user tracking shows or not, return an empty list or a filled list
+//        return ResponseEntity.ok(trackers); // Return the list of trackers
+//    }
+
+
+    @GetMapping
     @ResponseStatus(HttpStatus.OK) //HTTP status code for successful retrieval
-    public ResponseEntity<List<UserTvTracker>> getTrackers(HttpServletRequest request) {
+    public ResponseEntity<List<ShowSummaryDTO>> getTrackedShows(HttpServletRequest request, @RequestParam String status) {
 
         Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
 
-        // Call the getTrackers method from UserTvTrackerService
-        List<UserTvTracker> trackers = userTvTrackerService.getTrackersByUserId(userIdOnRequest);
-
-        if(trackers.isEmpty()){
-            return ResponseEntity.noContent().build(); // No content found
+        if(!WatchStatus.isValidStatus(status)){
+           throw new UserTvTrackerException("Invalid status");
         }
 
-        return ResponseEntity.ok(trackers); // Return the list of trackers
+
+        // Call the getTrackers method from UserTvTrackerService
+        List<ShowSummaryDTO> trackers = userTvTrackerService.getTrackedShows(userIdOnRequest, WatchStatus.valueOf(status));
+
+        //regardless of user tracking shows or not, return an empty list or a filled list
+        return ResponseEntity.ok(trackers); // Return the list of tracked shows
     }
+
+
+
 
 
     @GetMapping(params = {"user-id", "show-id"}) // Endpoint to get a specific tracker by ID
