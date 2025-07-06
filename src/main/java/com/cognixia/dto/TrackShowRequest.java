@@ -1,10 +1,10 @@
 package com.cognixia.dto;
 
-import java.util.Date;
-
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import lombok.Data;
+
+import java.time.LocalDate;
 import java.util.List;
 
 @Data
@@ -22,14 +22,13 @@ public class TrackShowRequest {
         private Integer currentSeason;
         private Double  userRating;
         private String  notes;
-        private java.sql.Date dateStarted;
-        private java.sql.Date dateCompleted;
+        private LocalDate dateStarted;
+        private LocalDate dateCompleted;
     }
 
+    //DTO used when storing show information on our database
     @Data
-    public static class TvShowDto {
-        private Integer showId;
-        private String  originalName;
+    public static class TvShowDto extends ShowSummaryDTO {
         private List<Integer> genreIds;    // REQUIRED for tv_show_genres
     }
 

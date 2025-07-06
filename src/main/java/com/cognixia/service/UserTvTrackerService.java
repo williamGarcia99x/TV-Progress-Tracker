@@ -22,18 +22,16 @@ import java.util.stream.Collectors;
 public class UserTvTrackerService {
 
     private UserTvTrackerDao userTvTrackerDao;
-    private TvShowService tvShowService;
+
 
     @Autowired
-    public UserTvTrackerService(UserTvTrackerDao userTvTrackerDao, TvShowService tvShowService) {
+    public UserTvTrackerService(UserTvTrackerDao userTvTrackerDao) {
         this.userTvTrackerDao = userTvTrackerDao;
-        this.tvShowService = tvShowService;
     }
 
 
 
     public void trackShow(TrackShowRequest.UserTvTrackerDto tracker, TrackShowRequest.TvShowDto tvShow) throws UserTvTrackerException, ServerException {
-
 
         UserTvTracker userTvTracker = TrackShowRequest.toUserTvTracker(tracker);
         validateTracker(userTvTracker);
@@ -129,7 +127,7 @@ public class UserTvTrackerService {
 
         //if both dateStarted and dateCompleted are not null, dateStarted must be before dateCompleted
         if (tracker.getDateStarted() != null && tracker.getDateCompleted() != null &&
-                tracker.getDateStarted().after(tracker.getDateCompleted())) {
+                tracker.getDateStarted().isAfter((tracker.getDateCompleted()))) {
             throw new UserTvTrackerException("Date started cannot be after date completed.");
         }
 
@@ -156,9 +154,9 @@ public class UserTvTrackerService {
         return list.stream()
                 .map(tv -> new ShowSummaryDTO(
                         tv.getShowId(),
-                        tv.getOriginalName(),     // as `name`
+                        tv.getName(),     // as `name`
                         tv.getOriginalName(),     // as `original_name`
-                        null                      // poster_path not stored yet
+                        tv.getPosterPath()                      // poster_path not stored yet
                 ))
                 .collect(Collectors.toList());
 

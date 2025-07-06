@@ -2,15 +2,18 @@ package com.cognixia.model;
 
 import lombok.*;
 
-import java.util.Date;
+import java.time.LocalDate;
+
 
 @Getter
 @Setter
 @AllArgsConstructor
-@NoArgsConstructor
+
 @ToString
 public class TvShow {
     private int showId;
+    private String name;
     private String originalName;
-    private Date createdAt;
+    private String posterPath;
+    private LocalDate createdAt;
 }

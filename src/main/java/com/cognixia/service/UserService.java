@@ -9,6 +9,7 @@ import com.cognixia.util.PasswordUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
@@ -35,7 +36,7 @@ public class UserService {
         String hashedPassword = PasswordUtil.hashPassword(password);
         // Test fake ID value
 
-        Optional<User> createdUser = userDao.createUser(new User(-1, username, hashedPassword, new Date()));
+        Optional<User> createdUser = userDao.createUser(new User(-1, username, hashedPassword, LocalDate.now()));
 
         if(createdUser.isEmpty()){
             // If the user creation fails, throw an exception

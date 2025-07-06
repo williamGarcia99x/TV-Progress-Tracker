@@ -7,13 +7,13 @@ CREATE TABLE users (
     user_id INT PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at DATE DEFAULT (CURRENT_DATE)
 );
 
 CREATE TABLE sessions (
     token VARCHAR(255) PRIMARY KEY,
     user_id INT NOT NULL,
-    expires_at TIMESTAMP NOT NULL,
+    expires_at DATE NOT NULL,
     FOREIGN KEY foreign_key_sessions (user_id) REFERENCES users(user_id)
 );
 
@@ -22,8 +22,10 @@ CREATE TABLE sessions (
 -- All other show details come from TMDb API calls
 CREATE TABLE tv_shows (
     show_id INT PRIMARY KEY,  -- TMDb show ID
+    name VARCHAR(200) NOT NULL,
     original_name VARCHAR(200) NOT NULL,  -- Original title in original language
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP  -- When first added to our system
+    poster_path VARCHAR(200), -- Poster path for the tv_show. This way it doesn't need to be fetched from TMDB.
+    created_at DATE DEFAULT (CURRENT_DATE)  -- When first added to our system
 );
 
 -- Genres table for normalized genre storage
@@ -51,9 +53,9 @@ CREATE TABLE user_tv_tracker (
     current_season INT,
     user_rating DECIMAL(3,1) CHECK (user_rating BETWEEN 1.0 AND 10.0),  -- User's personal rating (1.0-10.0)
     notes TEXT,  -- User's personal notes about the show
-    date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    date_started TIMESTAMP NULL,  -- When user started watching
-    date_completed TIMESTAMP NULL,  -- When user completed the show
+    date_added DATE DEFAULT (CURRENT_DATE),
+    date_started DATE NULL,  -- When user started watching
+    date_completed DATE NULL,  -- When user completed the show
 
     -- Foreign key constraints
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
@@ -86,32 +88,30 @@ INSERT INTO genres (genre_id, name) VALUES
 (10768, 'War & Politics'),
 (37, 'Western');
 
-
-
 -- Insert some popular TV shows with their TMDb IDs and original names
 -- Breaking Bad
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1396, 'Breaking Bad');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1396, 'Breaking Bad', 'Breaking Bad', 'ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg');
 
 -- The Office (US)
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(2316, 'The Office');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(2316, 'The Office', 'The Office', '7DJKHzAi83BmQrWLrYYOqcoKfhR.jpg');
 
 -- Stranger Things
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(66732, 'Stranger Things');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(66732, 'Stranger Things', 'Stranger Things', 'uOOtwVbSr4QDjAGIifLDwpb2Pdl.jpg');
 
 -- Game of Thrones
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1399, 'Game of Thrones');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1399, 'Game of Thrones', 'Game of Thrones' ,'1XS1oqL89opfnbLl8WnZY1O1uJx.jpg');
 
 -- Friends
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1668, 'Friends');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1668, 'Friends','Friends', '2koX1xLkpTQM4IZebYvKysFW1Nh.jpg');
 
 -- Money Heist (La casa de papel)
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(71446, 'La casa de papel');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(71446, 'Money Heist','La casa de papel', 'l7MngINTyv0O6mNlwNsUlhQ9iwZ.png');
 
 -- Insert genres for each TV show using TMDb genre IDs
 -- Breaking Bad
@@ -145,8 +145,8 @@ INSERT INTO tv_show_genres (show_id, genre_id) VALUES
 (71446, 18);     -- Drama
 
 -- The Sopranos
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1398, 'The Sopranos');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1398, 'The Sopranos', 'The Sopranos','rTc7ZXdroqjkKivFPvCPX0Ru7uw.jpg');
 
 -- Genre IDs from JSON: 80 = Crime, 18 = Drama
 INSERT INTO tv_show_genres (show_id, genre_id) VALUES
@@ -154,8 +154,8 @@ INSERT INTO tv_show_genres (show_id, genre_id) VALUES
 (1398, 18);   -- Drama
 
 -- tv_shows
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1621, 'Boardwalk Empire');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1621, 'Boardwalk Empire', 'Boardwalk Empire','kL6SqlVPpfAof2nQbh1VxkUuXBQ.jpg');
 
 -- tv_show_genres
 INSERT INTO tv_show_genres (show_id, genre_id) VALUES
@@ -163,8 +163,8 @@ INSERT INTO tv_show_genres (show_id, genre_id) VALUES
 (1621, 18);  -- Drama
 
 -- tv_shows
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(93405, '오징어 게임');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(93405, 'Squid Game','오징어 게임', '1QdXdRYfktUSONkl1oD5gc6Be0s.jpg');
 
 -- tv_show_genres
 INSERT INTO tv_show_genres (show_id, genre_id) VALUES
@@ -173,8 +173,8 @@ INSERT INTO tv_show_genres (show_id, genre_id) VALUES
 (93405, 18);     -- Drama
 
 -- tv_shows
-INSERT INTO tv_shows (show_id, original_name) VALUES
-(1996, 'The Flintstones');
+INSERT INTO tv_shows (show_id, name, original_name, poster_path) VALUES
+(1996, 'The Flintstones', 'The Flintstones', '30P6ifagQ3fguTsI33KMmDLTAx6.jpg');
 
 -- tv_show_genres
 INSERT INTO tv_show_genres (show_id, genre_id) VALUES

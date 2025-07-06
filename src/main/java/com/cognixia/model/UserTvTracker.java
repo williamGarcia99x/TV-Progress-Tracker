@@ -6,7 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.sql.Date;
+import java.time.LocalDate;
 
 
 @Getter
@@ -23,9 +23,9 @@ public class UserTvTracker {
     private Integer currentSeason;
     private Double userRating;
     private String notes;
-    private Date dateAdded;
-    private Date dateStarted;
-    private Date dateCompleted;
+    private LocalDate dateAdded;
+    private LocalDate dateStarted;
+    private LocalDate dateCompleted;
 
 
 }

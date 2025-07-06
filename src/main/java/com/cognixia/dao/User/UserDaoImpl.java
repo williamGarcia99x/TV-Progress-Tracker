@@ -83,7 +83,7 @@ public class UserDaoImpl implements UserDao{
 
     private User mapRowToUser(ResultSet rs) throws SQLException {
         User user = new User(rs.getInt("user_id"), rs.getString("username"),
-                rs.getString("password_hash"), rs.getDate("created_at"));
+                rs.getString("password_hash"), rs.getDate("created_at").toLocalDate());
 
         return user;
     }

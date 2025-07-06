@@ -4,7 +4,6 @@ import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
 import com.cognixia.model.TvShow;
-import com.cognixia.model.User;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import com.cognixia.util.ConnectionFactory;
@@ -31,7 +30,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
     @Override
     public void trackShow(TrackShowRequest.TvShowDto showDto, UserTvTracker tvTracker) throws UserTvTrackerException, ServerException {
 
-        final String INSERT_SHOW   = "INSERT IGNORE INTO tv_shows (show_id, original_name) VALUES (?, ?)";
+        final String INSERT_SHOW   = "INSERT IGNORE INTO tv_shows (show_id, name, original_name, poster_path) VALUES (?, ?, ?, ?)";
         final String INSERT_GENRE  = "INSERT IGNORE INTO tv_show_genres (show_id, genre_id) VALUES (?, ?)";
         final String INSERT_TRACK  = """
         INSERT INTO user_tv_tracker
@@ -44,15 +43,17 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
 
             /* 1️⃣  tv_shows ---------------------------------------------------- */
             try (PreparedStatement psShow = conn.prepareStatement(INSERT_SHOW)) {
-                psShow.setInt(1, showDto.getShowId());
-                psShow.setString(2, showDto.getOriginalName());
+                psShow.setInt(1, showDto.getId());
+                psShow.setString(2, showDto.getName());
+                psShow.setString(3, showDto.getOriginal_name());
+                psShow.setString(4, showDto.getPoster_path());
                 psShow.executeUpdate();
             }
 
             /* 2️⃣  tv_show_genres (batch) ------------------------------------- */
             try (PreparedStatement psGenre = conn.prepareStatement(INSERT_GENRE)) {
                 for (Integer gid : showDto.getGenreIds()) {
-                    psGenre.setInt(1, showDto.getShowId());
+                    psGenre.setInt(1, showDto.getId());
                     psGenre.setInt(2, gid);
                     psGenre.addBatch();
                 }
@@ -85,11 +86,11 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
 
                 if (tvTracker.getDateStarted() == null)
                     psTrack.setNull(8, Types.DATE);
-                else psTrack.setDate(8, tvTracker.getDateStarted());
+                else psTrack.setDate(8, Date.valueOf(tvTracker.getDateStarted()));
 
                 if (tvTracker.getDateCompleted() == null)
                     psTrack.setNull(9, Types.DATE);
-                else psTrack.setDate(9, tvTracker.getDateCompleted());
+                else psTrack.setDate(9, Date.valueOf(tvTracker.getDateCompleted()));
 
                 if (psTrack.executeUpdate() == 0)
                     throw new ServerException("Failed to track show: no rows inserted.");
@@ -154,11 +155,11 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
 
             if (tracker.getDateStarted() == null)
                 pstmt.setNull(6, Types.DATE);
-             else pstmt.setDate(6, tracker.getDateStarted());
+             else pstmt.setDate(6, Date.valueOf(tracker.getDateStarted()));
 
             if (tracker.getDateCompleted() == null)
                 pstmt.setNull(7, Types.DATE);
-            else pstmt.setDate(7, tracker.getDateCompleted());
+            else pstmt.setDate(7, Date.valueOf(tracker.getDateCompleted()));
 
             pstmt.setInt(8, tracker.getTrackerId());
 
@@ -275,7 +276,7 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
      */
     public List<TvShow> getTrackedShowsByUserId(int userId, WatchStatus status) throws ServerException {
         final String sql =
-                "SELECT ts.show_id, ts.original_name, ts.created_at " +
+                "SELECT ts.show_id, ts.name, ts.original_name, ts.poster_path, ts.created_at " +
                         "FROM user_tv_tracker utt " +
                         "JOIN tv_shows ts ON utt.show_id = ts.show_id " +
                         "WHERE utt.user_id = ? AND utt.watch_status = ? " +
@@ -316,20 +317,17 @@ public class UserTvTrackerDaoImpl implements  UserTvTrackerDao {
                 rs.getInt("current_season"),
                 rs.getDouble("user_rating"),
                 rs.getString("notes"),
-                rs.getDate("date_added"),
-                rs.getDate("date_started"),
-                rs.getDate("date_completed")
+                rs.getDate("date_added").toLocalDate(),
+                rs.getDate("date_started") != null ? rs.getDate("date_started").toLocalDate() : null,
+                rs.getDate("date_completed") != null ? rs.getDate("date_completed").toLocalDate() : null
         );
     }
     /**
      * Helper that converts a {@link ResultSet} row into a {@link TvShow}.
      */
     private TvShow mapRowToTvShow(ResultSet rs) throws SQLException {
-        TvShow tvShow = new TvShow();
-        tvShow.setShowId(rs.getInt("show_id"));
-        tvShow.setOriginalName(rs.getString("original_name"));
-        tvShow.setCreatedAt(rs.getDate("created_at"));
-        return tvShow;
+        return new TvShow(rs.getInt("show_id"), rs.getString("name"), rs.getString("original_name"),
+                rs.getString("poster_path"), rs.getDate("created_at").toLocalDate());
     }
 
 

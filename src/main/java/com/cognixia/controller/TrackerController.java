@@ -5,8 +5,6 @@ import com.cognixia.dto.ShowSummaryDTO;
 import com.cognixia.dto.TrackShowRequest;
 import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserTvTrackerException;
-import com.cognixia.model.TvShow;
-import com.cognixia.model.User;
 import com.cognixia.model.UserTvTracker;
 import com.cognixia.model.WatchStatus;
 import com.cognixia.service.UserTvTrackerService;
@@ -32,31 +30,15 @@ public class TrackerController {
         this.userTvTrackerService = userTvTrackerService;
     }
 
-
-//    @GetMapping("/")
-//    @ResponseStatus(HttpStatus.OK) //HTTP status code for successful retrieval
-//    public ResponseEntity<List<UserTvTracker>> getTrackers(HttpServletRequest request) {
-//
-//        Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
-//
-//        // Call the getTrackers method from UserTvTrackerService
-//        List<UserTvTracker> trackers = userTvTrackerService.getTrackersByUserId(userIdOnRequest);
-//
-//        //regardless of user tracking shows or not, return an empty list or a filled list
-//        return ResponseEntity.ok(trackers); // Return the list of trackers
-//    }
-
-
     @GetMapping
     @ResponseStatus(HttpStatus.OK) //HTTP status code for successful retrieval
-    public ResponseEntity<List<ShowSummaryDTO>> getTrackedShows(HttpServletRequest request, @RequestParam String status) {
+    public ResponseEntity<List<ShowSummaryDTO>> getTrackedShowsByUser(HttpServletRequest request, @RequestParam String status) {
 
         Integer userIdOnRequest = (Integer) request.getAttribute("AUTH_USER_ID");
 
         if(!WatchStatus.isValidStatus(status)){
            throw new UserTvTrackerException("Invalid status");
         }
-
 
         // Call the getTrackers method from UserTvTrackerService
         List<ShowSummaryDTO> trackers = userTvTrackerService.getTrackedShows(userIdOnRequest, WatchStatus.valueOf(status));
