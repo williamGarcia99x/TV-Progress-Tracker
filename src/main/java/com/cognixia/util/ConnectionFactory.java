@@ -2,10 +2,14 @@ package com.cognixia.util;
 
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.beans.factory.annotation.Value;
 
-import javax.sql.DataSource;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.Properties;
 
 /**
  * Thread‑safe, pooled connection factory backed by HikariCP.
@@ -22,22 +26,42 @@ import java.sql.SQLException;
 public final class ConnectionFactory {
 
     /** Singleton pool instance */
-    private static final HikariDataSource dataSource;
+    private static  HikariDataSource dataSource;
+
+    private static String datasourceUrl;
+
+    private static String username;
+
+    private static String password;
 
     /* ---------- Static initializer ---------- */
     static {
-        HikariConfig cfg = new HikariConfig();
-
-        // Core JDBC properties
-        cfg.setJdbcUrl("jdbc:mysql://localhost:3306/tv_progress_tracker");
-        cfg.setUsername("root");
-        cfg.setPassword("password");
-
-        dataSource = new HikariDataSource(cfg);
+        try {
+            makeConnection();
+        } catch (IOException | ClassNotFoundException | SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /** Hide constructor */
     private ConnectionFactory() { }
+
+    private static void makeConnection() throws FileNotFoundException, IOException, ClassNotFoundException, SQLException {
+        Properties props = new Properties();
+
+        props.load(new FileInputStream("src/main/resources/application.properties"));
+
+        String url = props.getProperty("spring.datasource.url");
+        String username = props.getProperty("spring.datasource.username");
+        String password = props.getProperty("spring.datasource.password");
+
+        HikariConfig cfg = new HikariConfig();
+        cfg.setJdbcUrl(url);
+        cfg.setUsername(username);
+        cfg.setPassword(password);
+        dataSource = new HikariDataSource(cfg);
+    }
+
 
     /* ---------- Public API ---------- */
 
