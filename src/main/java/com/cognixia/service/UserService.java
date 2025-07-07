@@ -1,31 +1,30 @@
 package com.cognixia.service;
 
-import com.cognixia.dao.UserDao;
+import com.cognixia.dao.User.UserDao;
+import com.cognixia.exception.ServerException;
 import com.cognixia.exception.UserAuthenticationException;
 import com.cognixia.exception.UserRegistrationException;
 import com.cognixia.model.User;
 import com.cognixia.util.PasswordUtil;
-import lombok.AllArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
-@AllArgsConstructor
+@Service
 public class UserService {
 
     private UserDao userDao;
 
+    @Autowired
+    public UserService(UserDao userDao){
+        this.userDao = userDao;
+    }
 
 
-    // This class will contain methods to interact with UserDao
-    // and perform business logic related to users.
-
-    // Example method to authenticate a user
-    // public Optional<User> authenticateUser(String username, String password) {
-    //     // Logic to authenticate user using UserDao
-    // }
-
-    public Optional<User> createUser(String username, String password) throws UserRegistrationException{
+    public User createUser(String username, String password) throws UserRegistrationException, ServerException{
         // Logic to create a user using UserDao
         // This would typically involve hashing the password and saving the user to the database.
 
@@ -35,28 +34,21 @@ public class UserService {
         }
 
         String hashedPassword = PasswordUtil.hashPassword(password);
-        // Dummy ID value
-        return userDao.createUser(new User(-1, username, hashedPassword, new Date()));
+        // Test fake ID value
+
+        Optional<User> createdUser = userDao.createUser(new User(-1, username, hashedPassword, LocalDate.now()));
+
+        if(createdUser.isEmpty()){
+            // If the user creation fails, throw an exception
+            throw new ServerException("Failed to create user with username: " + username);
+        }
+
+        return createdUser.get();
     }
-    
-    // method for authenticating user
-    public Optional<User> authenticateUser(String username, String password) throws UserAuthenticationException {
-        // Authenticate user. Compare the stored hashed password for the user with the given username against the provided
-        //password
-        Optional<User> userOptional = userDao.getUserByUsername(username);
 
-        //Username not found
-        if(userOptional.isEmpty()){
-            throw new UserAuthenticationException("Username not found: " + username);
-        }
-
-        //Password is incorrect, return user object
-        if(!PasswordUtil.checkPassword(password,userOptional.get().getPassword_hash())){
-            throw new UserAuthenticationException("Password is incorrect for username: " + username);
-        }
-
-        //Password is incorrect.
-        return userOptional;
+    //create a getUserByUsername method
+    public Optional<User> getUserByUsername(String username){
+        return userDao.getUserByUsername(username);
     }
 
 
