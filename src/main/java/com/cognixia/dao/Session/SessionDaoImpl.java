@@ -25,7 +25,7 @@ public class SessionDaoImpl {
 
             pstmt.setString(1, session.getToken());
             pstmt.setInt(2, session.getUserId());
-            pstmt.setObject(3, session.getExpiresAt());
+            pstmt.setTimestamp(3, java.sql.Timestamp.valueOf(session.getExpiresAt()));
 
             pstmt.executeUpdate();
         }catch (SQLException e){

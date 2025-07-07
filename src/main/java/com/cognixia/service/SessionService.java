@@ -30,8 +30,8 @@ public class SessionService {
 
         // Using UUID for simplicity
         String token = UUID.randomUUID().toString();
-        // Set the expiration time (e.g., 12 hours from now)
-        LocalDateTime expirationTime = LocalDateTime.now().plusHours(12);
+        // Set the expiration time (e.g., 48 hours from now)
+        LocalDateTime expirationTime = LocalDateTime.now().plusHours(48);
 
         // Store the session (this is a placeholder, implement your own storage logic)
         // For example, you could store it in a database or an in-memory cache
